@@ -1,0 +1,255 @@
+<template>
+  <div class="zgz-admin-index-aside">
+    <el-col :span="24">
+      <div>
+
+      </div>
+      <!--
+      :default-active="$route.name"
+          获取router路由的name 对应menu-item内的index
+      为了对应 tabs 的跳转点击 做选中
+      -->
+      <!--鼠标触碰自动弹出  @mouseenter.native="collapseOpen" @mouseleave.native="collapseClose"-->
+      <el-menu :default-active="$route.name" :collapse="isCollapse" >
+        <el-menu-item @click="indexTools">
+          <i class="el-icon-s-home"></i>
+          <span slot="title">TAT</span>
+        </el-menu-item>
+        <!-- 循环数据格式 -->
+        <el-submenu :index="`${index}`" v-for="(menu,index) in menuList" :key="index">
+          <template slot="title">
+            <i :class="menu.icont"></i>
+            <span>{{menu.name}}</span>
+          </template>
+          <el-menu-item-group>
+            <el-menu-item :index="item.routeName" v-for="item in menu.menuItem" :key="item.index" @click="handleOpen2(item)">{{item.name}}</el-menu-item>
+          </el-menu-item-group>
+        </el-submenu>
+        <!--Druid-->
+        <el-menu-item @click="druidTool">
+          <i class="el-icon-odometer"></i>
+          <span slot="title">Druid监控管理</span>
+        </el-menu-item>
+        <!--关闭侧边栏-->
+        <el-menu-item v-show="isCollapseStatusClose"  @click="collapseStatusClose">
+          <i class="el-icon-arrow-left"></i>
+        </el-menu-item>
+        <!--打开侧边栏-->
+        <el-menu-item v-show="isCollapseStatusOpen" @click="collapseStatusOpen">
+            <i class="el-icon-arrow-right"></i>
+        </el-menu-item>
+        <!--登出-->
+        <el-menu-item style="padding-bottom: 10px">
+          <i class="el-icon-switch-button" v-on:click="logout" ></i>
+        </el-menu-item>
+      </el-menu>
+    </el-col>
+  </div>
+</template>
+
+<script>
+  import { mapActions } from 'vuex'
+
+  export default {
+    name: 'zgz-admin-index-aside',
+    components: {},
+    data() {
+      return {
+        collapseBtnClick: true,
+        isCollapse: true,
+        isRouter: true,
+        isCollapseStatusClose: false,
+        isCollapseStatusOpen: true,
+        // 将所需submenu,menu和tabs所需参数写成数据格式
+        menuList: [
+          {
+            icont: 'el-icon-s-custom',
+            name: '个人中心',
+            menuItem: [
+              {
+                title: '个人信息',
+                routeName: 'PersonInfo',
+                name: '个人信息'
+              },
+              {
+                title: '修改密码',
+                routeName: 'PersonPassword',
+                name: '修改密码'
+              },
+              {
+                title: '登录记录',
+                routeName: 'PersonIP',
+                name: '登录记录'
+              }
+            ]
+          },
+          {
+            icont: 'el-icon-set-up',
+            name: '管理模块',
+            menuItem: [
+              {
+                title: '科目管理',
+                routeName: 'KemuManage',
+                name: '科目管理'
+              },
+              {
+                title: '学校管理',
+                routeName: 'XuexiaoManage',
+                name: '学校管理'
+              },
+              {
+                title: '教师管理',
+                routeName: 'JiaoshiManage',
+                name: '教师管理'
+              },
+              {
+                title: '学期管理',
+                routeName: 'XueqiManage',
+                name: '学期管理'
+              }
+            ]
+          },
+          {
+            icont: 'el-icon-edit',
+            name: '考务模块',
+            menuItem: [
+              {
+                title: '考试管理',
+                routeName: 'KaoshiManage',
+                name: '考试管理'
+              }
+            ]
+          },
+          {
+            icont: 'el-icon-notebook-1',
+            name: '录题模块',
+            menuItem: [
+              {
+                title: '我的录入任务',
+                routeName: 'MyLuruTask',
+                name: '我的录入任务'
+              },
+              {
+                title: '我的审核任务',
+                routeName: 'MyShenheTask',
+                name: '我的审核任务'
+              },
+              {
+                title: '已完成录入任务',
+                routeName: 'DoneLuruTask',
+                name: '已完成录入任务'
+              },
+              {
+                title: '已完成审核任务',
+                routeName: 'DoneShenheTask',
+                name: '已完成审核任务'
+              }
+            ]
+          },
+          {
+            icont: 'el-icon-folder-opened',
+            name: '网盘模块',
+            menuItem: [
+              {
+                title: '所有文件',
+                routeName: 'NetDisk',
+                name: '所有文件'
+              },
+              {
+                title: '我的文件',
+                routeName: 'NetDiskOfMine',
+                name: '我的文件'
+              },
+              {
+                title: '上传文件',
+                routeName: 'NetDiskUpload',
+                name: '上传文件'
+              },
+              {
+                title: '我的回收站',
+                routeName: 'NetDiskRecover',
+                name: '我的回收站'
+              }
+            ]
+          },
+          {
+            icont: 'el-icon-warning-outline',
+            name: '管理员功能',
+            menuItem: [
+              {
+                title: '创建录题任务',
+                routeName: 'CreateTask',
+                name: '创建录题任务'
+              },
+              {
+                title: '管理录题任务',
+                routeName: 'AllTaskList',
+                name: '管理录题任务'
+              },
+              {
+                title: '用户管理',
+                routeName: 'YonghuManage',
+                name: '用户管理'
+              },
+              {
+                title: '注册审批',
+                routeName: 'SignupManage',
+                name: '注册审批'
+              }
+            ]
+          }
+        ]
+      };
+    },
+
+    created() {},
+
+    mounted() {},
+
+    methods: {
+      // 调用 注册vuex内注册的editableTabs方法
+      ...mapActions({
+        handleOpen2: 'editableTabs'
+      }),
+      //侧边栏打开
+      collapseStatusOpen () {
+        this.isCollapse = false;
+        this.isCollapseStatusClose = true;
+        this.isCollapseStatusOpen = false;
+      },
+      //侧边栏关闭
+      collapseStatusClose () {
+        this.isCollapse = true;
+        this.isCollapseStatusOpen = true;
+        this.isCollapseStatusClose = false;
+      },
+
+      indexTools () {
+        this.$router.replace({path: '/indextools'})
+      },
+
+      druidTool (){
+        window.location.href = 'http://localhost:8888/druid/index.html'
+      },
+
+      //登出
+      logout () {
+        var that = this
+        this.$axios.get('/logout')
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              //清除sessionStorage
+              sessionStorage.removeItem("msg");
+              sessionStorage.clear();
+              this.$router.replace({path: '/login'})
+            }
+          })
+      }
+    }
+  }
+</script>
+<style scoped>
+.logout {
+  margin-bottom: 10px;
+}
+</style>

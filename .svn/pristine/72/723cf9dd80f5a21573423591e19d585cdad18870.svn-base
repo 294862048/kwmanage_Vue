@@ -1,0 +1,84 @@
+<template>
+  <el-container>
+    <el-aside width="201px">
+      <div class="main">
+        <h4>考务管理系统</h4>
+        <el-menu default-active="1" class="el-menu-vertical-demo" router>
+          <el-submenu index="1">
+            <template slot="title">
+              <i class="el-icon-menu"></i>
+              <span  slot="title">管理模块</span>
+            </template>
+            <el-menu-item-group>
+              <el-menu-item index="/manage/kemumanage">科目管理</el-menu-item>
+              <el-menu-item index="/manage/xuexiaomanage">学校管理</el-menu-item>
+              <el-menu-item index="/manage/jiaoshimanage">教师管理</el-menu-item>
+              <el-menu-item index="/manage/xueqimanage">学期管理</el-menu-item>
+              <el-menu-item index="/manage/yonghumanage" id="admin">用户管理(admin)</el-menu-item>
+            </el-menu-item-group>
+          </el-submenu>
+          <el-submenu index="2">
+            <template slot="title">
+              <i class="el-icon-menu"></i>
+              <span  slot="title">考务模块</span>
+            </template>
+            <el-menu-item-group>
+              <el-menu-item index="/kaowu/kaoshimanage">考试管理</el-menu-item>
+              <el-menu-item index="2-2">选项2</el-menu-item>
+            </el-menu-item-group>
+          </el-submenu>
+        </el-menu>
+      </div>
+    </el-aside>
+    <el-container>
+      <el-header>Header</el-header>
+
+      <el-main>
+        <div>
+          <router-view></router-view>
+        </div>
+      </el-main>
+    </el-container>
+  </el-container>
+</template>
+
+<script>
+export default {
+  name: 'AppIndex',
+  data () {
+    return {
+      isRouter: true,
+      isCollapse: true
+    };
+  },
+  mounted () {
+  },
+  methods: {
+  }
+}
+</script>
+
+<style scoped>
+  .el-main{
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    background-color: rgba(251,252,252,1);
+    padding: 0;
+  }
+  .el-menu-vertical-demo:not(.el-menu--collapse) {
+    width: 200px;
+    min-height: 100%;
+  }
+
+  #admin {
+    color: #E3658D;
+  }
+
+  .el-header {
+    background-color: #409EFF;
+    color: #333333;
+    text-align: center;
+    line-height: 60px;
+  }
+</style>

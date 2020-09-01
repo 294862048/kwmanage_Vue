@@ -1,0 +1,185 @@
+<template>
+  <div>
+    <div style="text-align: left; margin: 5px">
+      <el-input prefix-icon="el-icon-search" v-model="searchTableInfo" placeholder="请输入文件名称关键词" style="width:240px"></el-input>
+    </div>
+
+    <!--  回收站内容表格-->
+    <el-table :height="tableHeight"
+              ref="netdiskTable"
+              border
+              :data="recoverNetdiskData.slice((currentPage-1)*pageSize, currentPage * pageSize)"
+              tooltip-effect="dark"
+              style="width: auto"
+              :row-style="{height:'25px',width:'auto'}"
+              :default-sort="{prop: 'netdisk_time', order: 'descending'}"
+    >
+      <el-table-column align="center" prop="netdisk_time" label="上传时间" width="auto" sortable>
+        <template slot-scope="{row,$index}">
+          <span >{{row.netdisk_time}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="netdisk_name" label="文件名称" width="auto">
+        <template slot-scope="{row,$index}">
+          <span >{{row.netdisk_name}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="netdisk_size" label="文件大小" width="auto" sortable>
+        <template slot-scope="{row,$index}">
+          <span >{{row.netdisk_size}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="netdisk_icon" label="文件类型" width="auto">
+        <template slot-scope="{row,$index}">
+          <span >{{row.netdisk_icon}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" label="操作">
+        <template slot-scope="{row,$index}">
+          <el-button size="mini" @click.native="recoverFile(row)">
+            还 原
+          </el-button>
+          <!--删除提示-->
+          <el-popover placement="top" >
+            <h5 align="center">确定永久删除？将不可恢复！</h5>
+            <div style="text-align: center; margin: 0">
+              <el-button type="danger" size="mini" @click="deleteRow(row)">确 定</el-button>
+            </div>
+            <el-button size="mini" slot="reference">永久删除</el-button>
+          </el-popover>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!--    分页-->
+    <el-pagination
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page="currentPage"
+      :page-size="pageSize"
+      layout="total, prev, pager, next, jumper"
+      :total="recoverNetdiskData.length">
+    </el-pagination>
+  </div>
+</template>
+
+<script>
+  var qs = require('qs');
+  export default {
+    name: 'NetDiskRecover',
+    data () {
+      return {
+        searchTableInfo:"",
+        currentPage: 1,
+        pageSize: 15,
+        showEdit: [], //显示编辑框
+        showBtn: [],
+        showSelect: [],
+        recoverNetdiskData: [],
+        tableHeight: window.innerHeight * 0.85,
+        //文件状态
+        // （绿色）公共0
+        // （红色）个人2
+        netdisk_stateOptions: [
+          {
+            value: '0',
+            label: '公共'
+          },
+          {
+            value: '2',
+            label: '个人'
+          }
+        ]
+      }
+    },
+
+    mounted () {
+      this.getRecoverFileByUserId();
+    },
+
+    watch: {
+      //搜索
+      searchTableInfo(){
+        var searchTableInfo = this.searchTableInfo;
+        if(searchTableInfo){
+          this.recoverNetdiskData = this.recoverNetdiskData.filter(value => value.netdisk_name.indexOf(this.searchTableInfo) !== -1)
+        } else {
+          this.getRecoverFileByUserId();
+        }
+      },
+    },
+
+    methods: {
+      //获取个人所有文件列表
+      getRecoverFileByUserId () {
+        var getData = this;
+        this.$axios.get('netdisk/getRecoverFileByUserId', {
+          params: {
+            user_id: localStorage.getItem("user_id")
+          }
+        })
+          .then((res) => {
+            getData.recoverNetdiskData = res.data.result;
+          })
+          .catch((err) => {
+            console.log(err);
+            alert('获取文件失败！');
+          })
+      },
+
+      recoverFile(row) {
+        var params = qs.stringify({
+          netdisk_id: row.netdisk_id
+        })
+        this.$axios.post('/netdisk/recoverFile', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '恭喜你，这是一条成功消息',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$notify({
+                title: '添加失败！',
+                type: 'error'
+              });
+            }
+          });
+      },
+
+      //永久删除（行）
+      deleteRow (row) {
+        var params = qs.stringify({
+          netdisk_id: row.netdisk_id
+        })
+        this.$axios.post('/netdisk/deleteForeverByNetdiskId', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '恭喜你，这是一条成功消息',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$notify({
+                title: '添加失败！',
+                type: 'error'
+              });
+            }
+          });
+      },
+
+      handleSizeChange: function (val) {
+        this.pagesize = val
+      },
+      handleCurrentChange: function (val) {
+        this.currentPage = val
+      }
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>

@@ -1,0 +1,261 @@
+<template>
+  <div>
+    <div style="text-align: left; margin: 5px">
+      <el-button @click="dialogInsertFormVisible = true">新增学校信息</el-button>
+      <el-button @click="cancelSelection()">取消全选</el-button>
+      <el-input prefix-icon="iconfont icon-sousuo" v-model="searchTableInfo" placeholder="请输入搜索内容" style="width:240px"></el-input>
+    </div>
+
+    <!--学校信息表格-->
+    <el-table :default-sort = "{prop: 'xuexiao_mingcheng'}"
+              :height="tableHeight"
+              ref="xuexiaoTable"
+              border
+              :data="xuexiaoData.slice((currentPage-1)*pageSize,currentPage*pageSize)"
+              tooltip-effect="dark"
+              style="width: auto">
+      <!--多选框-->
+      <el-table-column type="selection" width="auto"></el-table-column>
+      <el-table-column sortable align="center" prop="xuexiao_mingcheng" label="学校名称" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.xuexiao_mingcheng">
+          <span v-if="!showEdit[$index]">{{row.xuexiao_mingcheng}}</span>
+        </template>
+      </el-table-column>
+      <!--操作列-->
+      <el-table-column align="center" label="操作" width="240px" fixed="right">
+        <template slot-scope="{row,$index}">
+          <el-button size="mini" @click.native="handleUpdate(row)" v-if="showBtn[$index]">
+            更新
+          </el-button>
+          <el-button size="mini" @click.native="handleCancle($index)" v-if="showBtn[$index]">
+            取消
+          </el-button>
+
+          <el-button size="mini" @click.native="handleEdit($index)" v-if="!showBtn[$index]">
+            编辑
+          </el-button>
+          <!--删除提示-->
+          <el-popover placement="top" >
+            <h5 align="center">确定删除？</h5>
+            <div style="text-align: center; margin: 0">
+              <el-button type="danger" size="mini" @click="deleteRow(row)">确 定</el-button>
+            </div>
+            <el-button size="mini" slot="reference">删 除</el-button>
+          </el-popover>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!--    分页-->
+    <el-pagination
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page="currentPage"
+      :page-size="pageSize"
+      layout="total, prev, pager, next, jumper"
+      :total="xuexiaoData.length">
+    </el-pagination>
+
+<!--    新增学校信息弹窗-->
+    <el-dialog title="新增学校信息" :visible.sync="dialogInsertFormVisible">
+      <el-form ref="insertXuexiaoFormRef"
+               v-if="true"
+               :rules="insertRules"
+               :model="insertXuexiaoForm"
+               label-position="left"
+               label-width="0px">
+        <el-form-item style="width: 100%" prop="xuexiao_mingcheng">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertXuexiaoForm.xuexiao_mingcheng"
+                    auto-complete="off"
+                    placeholder="请输入学期名称"/>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogInsertFormVisible = false">取 消</el-button>
+        <el-button @click="resetForm">重 置</el-button>
+        <el-button type="primary" @click.native.prevent="insertXuexiao">提 交</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+  var qs = require('qs');
+  export default {
+    name: "XuexiaoManage",
+
+    data () {
+      //输入校验
+      let validInsert = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入学校名称！"));
+        } else {
+          callback();
+        }
+      };
+
+      return {
+        searchTableInfo:"",
+        currentPage: 1,
+        pageSize: 15,
+        tableHeight: window.innerHeight * 0.85,
+        insertXuexiaoForm: {
+          xuexiao_mingcheng: ''
+        },
+
+        //输入规则
+        insertRules: {
+          xuexiao_mingcheng: [
+            { required: true, validator: validInsert, trigger: "blur" }
+          ]
+        },
+        dialogInsertFormVisible: false,
+        dialogUpdateFormVisible: false,
+        xuexiaoData: [],
+        showEdit: [], //显示编辑框
+        showBtn: [],
+        showBtnOrdinary: true
+        //loading: true
+      }
+    },
+
+    mounted () {
+      this.getAllXuexiao();
+    },
+
+    watch: {
+      //搜索
+      searchTableInfo(){
+        var searchTableInfo = this.searchTableInfo;
+        if(searchTableInfo){
+          this.xuexiaoData = this.xuexiaoData.filter(value => value.xuexiao_mingcheng.indexOf(this.searchTableInfo) !== -1)
+        } else {
+          this.getAllXuexiao();
+        }
+      },
+    },
+
+    methods: {
+      //新增学校
+      insertXuexiao() {
+        this.$refs.insertXuexiaoFormRef.validate((valid) => {
+          if (valid) {
+            var params = qs.stringify({
+              xuexiao_mingcheng: this.insertXuexiaoForm.xuexiao_mingcheng
+            })
+            this.$axios.post('/manage/xuexiao/insertXuexiao', params)
+              .then(res => {
+                if (res.status === 200 && res.data && res.data.code === 200) {
+                  this.$router.go(0);
+                } else if (res.status === 200 && res.data && res.data.code === 201) {
+                  this.$notify({
+                    title: '添加失败！',
+                    type: 'error'
+                  });
+                }
+              });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      },
+
+      //重置表单
+      resetForm() {
+        this.$refs.insertXuexiaoFormRef.resetFields();
+      },
+
+      //取消全选
+      cancelSelection() {
+        this.$refs.xuexiaoTable.clearSelection();
+      },
+
+      //获取全部科目列表
+      getAllXuexiao() {
+        var getData = this;
+        this.$axios.get('manage/xuexiao/getAll')
+          .then((res) => {
+            getData.xuexiaoData = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取学校信息失败！');
+          })
+      },
+
+      //编辑（行）
+      //点击编辑
+      handleEdit(index) {
+        this.$set(this.showEdit,index,true)
+        this.$set(this.showBtn,index,true)
+      },
+      //取消编辑
+      handleCancle(index) {
+        this.$set(this.showEdit,index,false)
+        this.$set(this.showBtn,index,false)
+      },
+      //点击更新
+      handleUpdate(row) {
+        var params = qs.stringify({
+          xuexiao_id: row.xuexiao_id,
+          xuexiao_mingcheng: row.xuexiao_mingcheng
+        })
+        this.$axios.post('/manage/xuexiao/updateSingleXuexiao', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '恭喜你，这是一条成功消息',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$notify({
+                title: '添加失败！',
+                type: 'error'
+              });
+            }
+          });
+      },
+
+      //删除（行）
+      deleteRow(row) {
+        console.log(row.xuexiao_id)
+        var params = qs.stringify({
+          xuexiao_id: row.xuexiao_id
+        })
+        this.$axios.post('/manage/xuexiao/deleteSingleXuexiao', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '恭喜你，这是一条成功消息',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$notify({
+                title: '添加失败！',
+                type: 'error'
+              });
+            }
+          });
+      },
+
+      handleSizeChange: function (size) {
+        this.pagesize = size
+        console.log(this.pagesize)
+      },
+      handleCurrentChange: function (currentPage) {
+        this.currentPage = currentPage
+        console.log(this.currentPage)
+      }
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>

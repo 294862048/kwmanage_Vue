@@ -1,0 +1,19 @@
+<template>
+  <div>
+    <div style="text-align:left" class="headtext">
+      <p style="font-size: 25px">个人中心</p>
+    </div>
+    <!--科目信息表格-->
+
+  </div>
+</template>
+
+<script>
+    export default {
+        name: "PersonInfo"
+    }
+</script>
+
+<style scoped>
+
+</style>

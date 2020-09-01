@@ -1,0 +1,184 @@
+<template>
+  <div class="home-tabs" style="margin-left: 10px">
+    <el-tabs v-model="tabs" @tab-click="handleTabsChangeGetKaoshi">
+      <el-tab-pane v-for="item in XueqiDataList"
+                   :key="item.xueqi_id"
+                   :prop="item.xueqi_id"
+                   :label="item.xueqi_mingcheng"
+                   :name="item.xueqi_id.toString()">
+      </el-tab-pane>
+      <!--    左对齐按钮-->
+      <!--    <div class="letf-items" style="float: left;">-->
+      <!--    <el-button @click="dialogInsertFormVisible = true">新增科目信息</el-button>-->
+      <!--    <el-button @click="cancelSelection()">取消全选</el-button>-->
+      <!--    </div>-->
+
+      <!--右对齐按钮-->
+      <div class="right-items" style="float: right;">
+        <!--    <el-button @click="clearFilter">清除表头过滤器</el-button>-->
+
+        <!--筛选框-->
+        <el-button slot="reference" type="primary" icon="el-icon-s-tools" style="right: initial">表格列筛选</el-button>
+      </div>
+    </el-tabs>
+
+
+    <!--    教师信息表格-->
+    <el-table ref="kaoshiTable"
+              class="kaoshiTable"
+              :height="tableHeight"
+              border
+              :data="KaoshiDataList"
+              tooltip-effect="dark"
+              :row-style="{height:'25px',width:'auto'}"
+              style="width: auto"
+    >
+      <!--多选框-->
+      <el-table-column type="selection" width="auto"></el-table-column>
+      <el-table-column align="center" prop="kaoshi_shijian" label="考试时间" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_code" label="考试编号" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="xuexiao_mingcheng" label="学校名称" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_mingcheng" label="考试名称" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kemu_mingcheng" label="科目名称" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_changci" label="考试场次" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="jiaoshi_xingming" label="主管教师" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_canyujiaoshi" label="参与教师" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_renshu" label="考试人数" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_xueshengmingdan" label="学生名单" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_baoming" label="考试报名" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_timu" label="考试题目" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_tixing" label="考试题型" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_shijuan" label="考试试卷" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_dianzhenbi" label="点阵笔" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_dianzhenzhi" label="点阵纸" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_kaochangzhunbei" label="考场准备" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_zhuangtai" label="考试状态" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_beizhu" label="备注" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_chuangjianren" label="创建人" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_chuangjianshijian" label="创建时间" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_xiugairen" label="修改人" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_xiugaishijian" label="修改时间" width="auto">
+      </el-table-column>
+<!--        <template slot-scope="{row,$index}">-->
+<!--          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.jiaoshi_xingming">-->
+<!--          <span v-if="!showEdit[$index]">{{row.jiaoshi_xingming}}</span>-->
+<!--        </template>-->
+      <!--操作列-->
+      <el-table-column align="center" label="操作" width="240px" fixed="right">
+<!--        <template slot-scope="{row,$index}">-->
+<!--          <el-button size="mini" @click.native="handleUpdate(row)" v-if="showBtn[$index]">-->
+<!--            更新-->
+<!--          </el-button>-->
+<!--          <el-button size="mini" @click.native="handleCancle($index)" v-if="showBtn[$index]">-->
+<!--            取消-->
+<!--          </el-button>-->
+
+<!--          <el-button size="mini" @click.native="handleEdit($index)" v-if="!showBtn[$index]">-->
+<!--            编辑-->
+<!--          </el-button>-->
+          <!--删除提示-->
+<!--          <el-popover placement="top" >-->
+<!--            <h5 align="center">确定删除？</h5>-->
+<!--            <div style="text-align: center; margin: 0">-->
+<!--              <el-button type="danger" size="mini" @click="deleteRow(row)">确 定</el-button>-->
+<!--            </div>-->
+<!--            <el-button size="mini" slot="reference">删 除</el-button>-->
+<!--          </el-popover>-->
+<!--        </template>-->
+      </el-table-column>
+    </el-table>
+  </div>
+</template>
+
+<script>
+  export default {
+    data() {
+      return {
+        tableHeight: window.innerHeight * 0.85,
+        tabs: '',
+        XueqiDataList: [],
+        KaoshiDataList: [],
+      };
+    },
+
+    mounted () {
+      this.getAllXueqi();
+    },
+
+    methods: {
+      //头部tabs选择学期
+      handleTabsChangeGetKaoshi (tab) {
+        var getData = this;
+        this.$axios.get('/kaowu/kaoshi/getAllByXueqiId', {
+          params:{
+            xueqi_id:tab.name
+          }
+        })
+          .then((res) => {
+            getData.KaoshiDataList = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取考试信息失败！');
+          })
+      },
+
+      //获取全部学期列表
+      getAllXueqi() {
+        var getData = this;
+        this.$axios.get('manage/xueqi/getAll')
+          .then((res) => {
+            getData.XueqiDataList = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取学期信息失败！');
+          })
+      },
+
+      // //表格过滤
+      // resetDateFilter() {
+      //   this.$refs.filterTable.clearFilter('date');
+      // },
+      // clearFilter() {
+      //   this.$refs.filterTable.clearFilter();
+      // },
+      // formatter(row, column) {
+      //   return row.address;
+      // },
+      // filterTag(value, row) {
+      //   return row.tag === value;
+      // },
+      // filterHandler(value, row, column) {
+      //   const property = column['property'];
+      //   return row[property] === value;
+      // }
+    }
+  };
+</script>
+
+<style scoped>
+
+</style>

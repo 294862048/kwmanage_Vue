@@ -1,0 +1,123 @@
+<template>
+  <div>
+    <!--科目信息表格-->
+    <el-table :default-sort = "{prop: 'kemu_mingcheng', order: 'descending'}"
+              :height="tableHeight"
+              ref="kemuTable"
+              border
+              :data="kemuData"
+              tooltip-effect="dark"
+              style="width: auto"
+              :row-style="{height:'25px',width:'auto'}"
+    >
+      <el-table-column sortable align="center" prop="ip_" label="科目名称" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kemu_mingcheng">
+          <span v-if="!showEdit[$index]">{{row.kemu_mingcheng}}</span>
+        </template>
+      </el-table-column>
+
+    </el-table>
+
+    <!--    新增学期信息弹窗-->
+    <el-dialog title="新增科目信息" :visible.sync="dialogInsertFormVisible">
+      <el-form ref="insertKemuFormRef"
+               v-if="true"
+               :rules="insertRules"
+               :model="insertKemuForm"
+               label-position="left"
+               label-width="0px">
+        <el-form-item style="width: 100%" prop="kemu_mingcheng">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKemuForm.kemu_mingcheng"
+                    auto-complete="off"
+                    placeholder="请输入科目名称"/>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogInsertFormVisible = false">取 消</el-button>
+        <el-button @click="resetForm">重 置</el-button>
+        <el-button type="primary" @click.native.prevent="insertKemu">提 交</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+  var qs = require('qs');
+  export default {
+    name: "PersonIP",
+
+    data () {
+      //输入校验
+      let validInsert = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入科目名称！"));
+        } else {
+          callback();
+        }
+      };
+
+      return {
+        tableHeight: window.innerHeight * 0.85,
+        insertKemuForm: {
+          kemu_mingcheng: ''
+        },
+
+        //输入规则
+        insertRules: {
+          kemu_mingcheng: [
+            { required: true, validator: validInsert, trigger: "blur" }
+          ]
+        },
+        dialogInsertFormVisible: false,
+        dialogUpdateFormVisible: false,
+        kemuData: [],
+        showEdit: [], //显示编辑框
+        showBtn: [],
+        showBtnOrdinary: true
+        //loading: true
+      }
+    },
+
+    mounted () {
+      this.getAllKemu();
+    },
+
+    methods: {
+      //获取登录信息
+      getLoginip() {
+        this.$refs.insertKemuFormRef.validate((valid) => {
+          if (valid) {
+            var params = qs.stringify({
+              kemu_mingcheng: localStorage.getItem("login_username")
+            })
+            this.$axios.post('/manage/kemu/insertKemu', params)
+              .then(res => {
+                if (res.status === 200 && res.data && res.data.code === 200) {
+                  this.$router.go(0);
+                } else if (res.status === 200 && res.data && res.data.code === 201) {
+                  this.$notify({
+                    title: '添加失败！',
+                    type: 'error'
+                  });
+                }
+              });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      },
+
+
+
+
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>

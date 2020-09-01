@@ -1,0 +1,130 @@
+<template>
+  <div>
+    <el-form ref="passFormRef" v-if="true" :rules="passRules" :model="passForm" label-position="left" label-width="0px">
+      <div style="text-align: left;">填写旧密码</div>
+      <el-form-item style="width: 100%" prop="oldpassword">
+        <el-input :clearable="true" :show-password="true" :validate-event="true" type="password" v-model="passForm.oldpassword" auto-complete="off" placeholder="请输入旧密码"/>
+      </el-form-item>
+      <div style="text-align: left;">密码，以字母开头，长度在8~18之间，只能包含字母、数字和下划线</div>
+      <el-form-item style="width: 100%" prop="newpassword">
+        <el-input :clearable="true" :show-password="true" :validate-event="true" type="password" v-model="passForm.newpassword" auto-complete="off" placeholder="请输入新密码"/>
+      </el-form-item>
+      <div style="text-align: left;">确认密码一致</div>
+      <el-form-item style="width: 100%" prop="repassword">
+        <el-input :clearable="true" :show-password="true" :validate-event="true" type="password" v-model="passForm.repassword" auto-complete="off" placeholder="请确认新密码"/>
+      </el-form-item>
+      <el-button type="primary" @click.native.prevent="onsubmit">提交修改</el-button>
+    </el-form>
+  </div>
+</template>
+
+<script>
+  import {isvalidPass} from '../Login'
+
+  export default {
+    name: 'PersonPassword',
+    data (){
+      //密码校验
+      let validatePass = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入密码！"));
+        } else if (!isvalidPass(value)) {
+          callback(new Error("密码以字母开头 长度在8~18之间 只能包含字母、数字和下划线"));
+        }
+        callback();
+
+      };
+
+      //密码校验
+      let validatePass1 = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入密码！"));
+        } else if (!isvalidPass(value)) {
+          callback(new Error("密码以字母开头 长度在8~18之间 只能包含字母、数字和下划线"));
+        } else {
+          if (this.passForm.repassword !== "") {
+            this.$refs.passFormRef.validateField("repassword");
+          }
+          callback();
+        }
+      };
+
+      //二次密码校验
+      let validatePass2 = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入确认密码！"));
+        } else if (value !== this.passForm.newpassword) {
+          callback(new Error("两次输入密码不一致！"));
+        } else {
+          callback();
+        }
+      };
+
+      return{
+        passForm: {
+          oldpassword: '',
+          newpassword: '',
+          repassword: ''
+        },
+        //表单规则
+        passRules: {
+          oldpassword: [
+            { required: true, validator: validatePass, trigger: "blur" }
+          ],
+          newpassword: [
+            { required: true, validator: validatePass1, trigger: "blur" }
+          ],
+          repassword: [
+            { required: true, validator: validatePass2, trigger: "blur" }
+          ]
+        },
+      }
+    },
+
+    methods: {
+      onsubmit() {
+        this.$refs.passFormRef.validate((valid) => {
+          if (valid) {
+            this.$axios.post('/passChange', {
+              user_id: sessionStorage.getItem("user_id"),
+              oldpassword: this.passForm.oldpassword,
+              newpassword: this.passForm.newpassword
+            })
+              .then(res => {
+                if (res.status === 200 && res.data && res.data.code === 200) {
+                  this.$message({
+                    message: '修改成功！请重新登录!',
+                    type: 'success',
+                    center: true
+                  });
+                  this.$router.replace({path: '/login'})
+                } else if(res.status === 200 && res.data && res.data.code === 201) {
+                  this.$message({
+                    message: '旧密码错误！',
+                    type: 'error',
+                    center: true
+                  });
+                } else if(res.status === 200 && res.data && res.data.code === 202) {
+                  this.$message({
+                    message: '错误！',
+                    type: 'error',
+                    center: true
+                  });
+                }
+              })
+              .catch(err => {
+                console.log(err);
+              });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      }
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>

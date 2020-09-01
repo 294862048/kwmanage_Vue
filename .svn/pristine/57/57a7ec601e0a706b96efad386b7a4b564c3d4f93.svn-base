@@ -1,0 +1,145 @@
+<template>
+  <div>
+    <el-steps :active="active" simple finish-status="success">
+      <el-step title="基本信息" icon="el-icon-s-flag"></el-step>
+      <el-step title="选择录入人" icon="el-icon-s-order"></el-step>
+      <el-step title="选择审核人" icon="el-icon-s-claim"></el-step>
+      <el-step title="消息设置" icon="el-icon-s-tools"></el-step>
+    </el-steps>
+<!--    基本信息录入-->
+    <div class="basicInfo" v-if="active === 0">
+<!--      <el-form ref="basicInfoRef" :model="insertLutiForm" label-width="80px">-->
+<!--        <el-form-item label="录题编号" prop="luti_code">-->
+<!--          <el-input :clearable="true"-->
+<!--                    type="text"-->
+<!--                    v-model="insertLutiForm.luti_code"-->
+<!--                    auto-complete="off"-->
+<!--                    placeholder="请输入录题编号">-->
+<!--          </el-input>-->
+<!--        </el-form-item>-->
+
+<!--        <el-form-item style="width: 100%" prop="xuexiao_mingcheng">-->
+<!--          <el-select style="width: 100%"-->
+<!--                     v-model="insertLutiForm.xuexiao_mingcheng"-->
+<!--                     filterable-->
+<!--                     @change="getJiaoshixingmingByXuexiaoId"-->
+<!--                     placeholder="请选择学校(可以搜索)">-->
+<!--            <el-option v-for="item in xuexiaoOptions"-->
+<!--                       :key="item.xuexiao_id"-->
+<!--                       :label="item.xuexiao_mingcheng"-->
+<!--                       :value="item.xuexiao_id">-->
+<!--            </el-option>-->
+<!--          </el-select>-->
+<!--        </el-form-item>-->
+
+<!--        <el-form-item style="width: 100%" prop="kemu_mingcheng">-->
+<!--          <el-select style="width: 100%"-->
+<!--                     v-model="insertLutiForm.kemu_mingcheng"-->
+<!--                     filterable-->
+<!--                     placeholder="请选择科目(可以搜索)">-->
+<!--            <el-option v-for="item in kemuOptions"-->
+<!--                       :key="item.kemu_id"-->
+<!--                       :label="item.kemu_mingcheng"-->
+<!--                       :value="item.kemu_id">-->
+<!--            </el-option>-->
+<!--          </el-select>-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="活动区域">-->
+<!--          <el-select v-model="form.region" placeholder="请选择活动区域">-->
+<!--            <el-option label="区域一" value="shanghai"></el-option>-->
+<!--            <el-option label="区域二" value="beijing"></el-option>-->
+<!--          </el-select>-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="活动时间">-->
+<!--          <el-col :span="11">-->
+<!--            <el-date-picker type="date" placeholder="选择日期" v-model="form.date1" style="width: 100%;"></el-date-picker>-->
+<!--          </el-col>-->
+<!--          <el-col class="line" :span="2">-</el-col>-->
+<!--          <el-col :span="11">-->
+<!--            <el-time-picker placeholder="选择时间" v-model="form.date2" style="width: 100%;"></el-time-picker>-->
+<!--          </el-col>-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="即时配送">-->
+<!--          <el-switch v-model="form.delivery"></el-switch>-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="活动性质">-->
+<!--          <el-checkbox-group v-model="form.type">-->
+<!--            <el-checkbox label="美食/餐厅线上活动" name="type"></el-checkbox>-->
+<!--            <el-checkbox label="地推活动" name="type"></el-checkbox>-->
+<!--            <el-checkbox label="线下主题活动" name="type"></el-checkbox>-->
+<!--            <el-checkbox label="单纯品牌曝光" name="type"></el-checkbox>-->
+<!--          </el-checkbox-group>-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="特殊资源">-->
+<!--          <el-radio-group v-model="form.resource">-->
+<!--            <el-radio label="线上品牌商赞助"></el-radio>-->
+<!--            <el-radio label="线下场地免费"></el-radio>-->
+<!--          </el-radio-group>-->
+<!--        </el-form-item>-->
+<!--        <el-form-item label="活动形式">-->
+<!--          <el-input type="textarea" v-model="form.desc"></el-input>-->
+<!--        </el-form-item>-->
+<!--        <el-form-item>-->
+<!--          <el-button type="primary" @click="onSubmit">立即创建</el-button>-->
+<!--          <el-button>取消</el-button>-->
+<!--        </el-form-item>-->
+<!--      </el-form>-->
+    </div>
+
+<!--    录入人-->
+    <div class="lururen" v-if="active === 1">
+<!--      <el-transfer-->
+<!--        filterable-->
+<!--        :filter-method="filterMethod"-->
+<!--        filter-placeholder="请输入录入人名字"-->
+<!--        v-model="value"-->
+<!--        :data="data">-->
+<!--      </el-transfer>-->
+    </div>
+
+<!--    审核人-->
+    <div class="shenheren" v-if="active === 2">
+<!--      <el-transfer-->
+<!--        filterable-->
+<!--        :filter-method="filterMethod"-->
+<!--        filter-placeholder="请输入审核人名字"-->
+<!--        v-model="value"-->
+<!--        :data="data">-->
+<!--      </el-transfer>-->
+    </div>
+
+<!--    提醒设置-->
+    <div class="messageSetting" v-if="active === 3"><h1>6666</h1></div>
+    <div>
+      <el-button style="margin-top: 12px;" @click="prev" v-if="active === 1 || active === 2 || active === 3">上一步</el-button>
+      <el-button style="margin-top: 12px;" @click="next" v-if="active === 0 || active === 1 || active === 2">下一步</el-button>
+      <el-button style="margin-top: 12px;" v-if="active === 3">创建任务</el-button>
+    </div>
+
+  </div>
+</template>
+
+<script>
+  export default {
+    name: 'CreateTask',
+    data() {
+      return {
+        active: 0
+      };
+    },
+
+    methods: {
+      prev() {
+        --this.active;
+        if (this.active < 0) this.active = 0;
+      },
+      next() {
+        if (this.active++ > 3) this.active = 0;
+      }
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>

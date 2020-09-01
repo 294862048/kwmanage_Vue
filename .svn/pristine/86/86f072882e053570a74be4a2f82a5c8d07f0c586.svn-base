@@ -1,0 +1,112 @@
+<template>
+  <div>
+    <div style="text-align:left" class="headtext">
+      <p style="font-size: 25px">登录记录</p> &nbsp;&nbsp;&nbsp;
+      <p style="color: #C0C4CC; font-size: 10px">通过查看登录时间，登录地点和登录设备判断账号是否正常</p> &nbsp;
+      <p style="color: red; font-size: 10px">注 (只展示最近十条记录)</p>
+    </div>
+    <!--登录信息表格-->
+    <el-table :height="tableHeight"
+              ref="loginipTable"
+              border
+              :data="loginipData"
+              tooltip-effect="dark"
+              style="width: auto"
+              :row-style="{height:'25px',width:'auto'}"
+    >
+      <el-table-column align="center" prop="ip_date" label="登录时间" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="ip_city" label="登录地点" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="ip_ip" label="登录IP" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="ip_device" label="登录设备" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="ip_OS" label="操作系统" width="auto">
+      </el-table-column>
+      <el-table-column align="center" label="操作">
+        <template slot-scope="scope">
+          <el-button class="copy-btn" @click="copy(scope.row)">
+            复制
+          </el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+  </div>
+</template>
+
+<script>
+  import Clipboard from 'clipboard';
+  var qs = require('qs');
+  export default {
+    name: "PersonIP",
+
+    data () {
+      return {
+        tableHeight: window.innerHeight * 0.85,
+        loginipData: []
+      }
+    },
+
+    mounted () {
+      this.getLoginip();
+    },
+
+    methods: {
+      //获取登录信息
+      getLoginip () {
+        var getData = this;
+        this.$axios.get('/loginip/getAllByUserId', {
+          params: {
+            user_id: sessionStorage.getItem("user_id")
+          }
+        })
+          .then((res) => {
+            getData.loginipData = res.data.result;
+          })
+          .catch((err) => {
+            console.log(err);
+            alert('获取登录信息失败！');
+          })
+      },
+
+      // 复制函数
+      copy (row) {
+        console.log(row.ip_date)
+        let copyText = "登录时间:" + row.ip_date.toString() +
+                       " 登录地点:" + row.ip_city.toString() +
+                       " 登录IP:" + row.ip_ip.toString() +
+                       " 登录设备:" + row.ip_device.toString() +
+                       " 操作系统:" + row.ip_OS.toString();
+        var clipboard = new Clipboard('.copy-btn', {
+          text: function() {
+            return copyText;
+          }
+        });
+        clipboard.on('success', e => {
+          this.$message({
+            message: '复制成功!',
+            type: 'success'
+          });
+          // 释放内存
+          clipboard.destroy()
+        })
+        clipboard.on('error', e => {
+          // 不支持复制
+          this.$message({
+            message: '复制失败!',
+            type: 'error'
+          });
+          // 释放内存
+          clipboard.destroy()
+        })
+      }
+    }
+  }
+</script>
+
+<style scoped>
+.headtext p{
+  display:inline-table
+}
+</style>

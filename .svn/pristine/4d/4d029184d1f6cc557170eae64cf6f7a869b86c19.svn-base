@@ -1,0 +1,834 @@
+<template>
+  <div class="home-tabs" style="margin-left: 10px">
+    <el-tabs v-model="tabs" @tab-click="handleTabsChangeGetKaoshi">
+      <el-tab-pane v-for="item in XueqiDataList"
+                   :key="item.xueqi_id"
+                   :prop="item.xueqi_id"
+                   :label="item.xueqi_mingcheng"
+                   :name="item.xueqi_id.toString()">
+      </el-tab-pane>
+<!--          左对齐按钮-->
+        <div class="letf-items" style="float: left;">
+        <el-button @click="dialogInsertFormVisible = true">新增考试信息</el-button>
+<!--        <el-button @click="cancelSelection()">取消全选</el-button>-->
+        </div>
+
+      <!--右对齐按钮-->
+      <div class="right-items" style="float: right;">
+        <!--    <el-button @click="clearFilter">清除表头过滤器</el-button>-->
+
+        <!--筛选框-->
+        <el-button slot="reference" type="primary" icon="el-icon-s-tools" style="right: initial">表格列筛选</el-button>
+      </div>
+    </el-tabs>
+
+
+    <!--    教师信息表格-->
+    <el-table ref="kaoshiTable"
+              class="kaoshiTable"
+              :height="tableHeight"
+              border
+              :data="KaoshiDataList"
+              tooltip-effect="dark"
+              :row-style="{height:'25px',width:'auto'}"
+              style="width: auto"
+    >
+      <!--多选框-->
+      <el-table-column type="selection" width="auto"></el-table-column>
+      <el-table-column align="center" prop="kaoshi_shijian" label="考试时间" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_shijian">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_shijian}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_code" label="考试编号" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_code">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_code}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="xuexiao_mingcheng" label="学校名称" width="auto">
+        <template slot-scope="{row,$index}">
+          <el-select v-if="showSelect[$index]"
+                     style="width: 100%"
+                     @change="getJiaoshixingmingByXuexiaoIdUpdate(row)"
+                     v-model="row.xuexiao_id"
+                     filterable
+          >
+            <el-option
+              v-for="item in xuexiaoOptions"
+              :key="item.xuexiao_id"
+              :label="item.xuexiao_mingcheng"
+              :value="item.xuexiao_id">
+            </el-option>
+          </el-select>
+          <span v-if="!showSelect[$index]">{{row.xuexiao_mingcheng}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_mingcheng" label="考试名称" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_mingcheng">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_mingcheng}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kemu_mingcheng" label="科目名称" width="auto">
+        <template slot-scope="{row,$index}">
+          <el-select v-if="showSelect[$index]"
+                     style="width: 100%"
+                     v-model="row.kemu_id"
+                     filterable
+          >
+            <el-option
+              v-for="item in kemuOptions"
+              :key="item.kemu_id"
+              :label="item.kemu_mingcheng"
+              :value="item.kemu_id">
+            </el-option>
+          </el-select>
+          <span v-if="!showSelect[$index]">{{row.kemu_mingcheng}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_changci" label="考试场次" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_changci">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_changci}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="jiaoshi_xingming" label="主管教师" width="auto">
+        <template slot-scope="{row,$index}">
+          <el-select v-if="showSelect[$index]"
+                     style="width: 100%"
+                     v-model="row.jiaoshi_id"
+                     filterable
+          >
+            <el-option
+              v-for="item in updateJiaoshiOptions"
+              :key="item.jiaoshi_id"
+              :label="item.jiaoshi_xingming"
+              :value="item.jiaoshi_id">
+            </el-option>
+          </el-select>
+          <span v-if="!showSelect[$index]">{{row.jiaoshi_xingming}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_canyujiaoshi" label="参与教师" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_canyujiaoshi">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_canyujiaoshi}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_renshu" label="考试人数" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_renshu">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_renshu}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_xueshengmingdan" label="学生名单" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_xueshengmingdan">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_xueshengmingdan}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_baoming" label="考试报名" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_baoming">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_baoming}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_timu" label="考试题目" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_timu">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_timu}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_tixing" label="考试题型" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_tixing">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_tixing}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_shijuan" label="考试试卷" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_shijuan">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_shijuan}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_dianzhenbi" label="点阵笔" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_dianzhenbi">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_dianzhenbi}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_dianzhenzhi" label="点阵纸" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_dianzhenzhi">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_dianzhenzhi}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_kaochangzhunbei" label="考场准备" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_kaochangzhunbei">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_kaochangzhunbei}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_zhuangtai" label="考试状态" width="auto">
+        <template slot-scope="{row,$index}">
+          <el-select v-if="showSelect[$index]"
+                     style="width: 100%"
+                     v-model="row.value"
+                     filterable
+          >
+            <el-option
+              v-for="item in kaoshi_zhuangtaiOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+          <span v-if="!showSelect[$index]">
+            <el-tag type="info" v-if="row.kaoshi_zhuangtai === 0">未开始</el-tag>
+            <el-tag type="info" v-if="row.kaoshi_zhuangtai === -10">已取消</el-tag>
+            <el-tag type="info" v-if="row.kaoshi_zhuangtai === -20">已终止</el-tag>
+            <el-tag type="success" v-if="row.kaoshi_zhuangtai === 10">筹备中</el-tag>
+            <el-tag type="success" v-if="row.kaoshi_zhuangtai === 20">正在报名</el-tag>
+            <el-tag type="success" v-if="row.kaoshi_zhuangtai === 30">已发布</el-tag>
+            <el-tag type="danger" v-if="row.kaoshi_zhuangtai === 100">正在考试</el-tag>
+            <el-tag type="danger" v-if="row.kaoshi_zhuangtai === 110">阅卷中</el-tag>
+            <el-tag type="danger" v-if="row.kaoshi_zhuangtai === 120">成绩发布</el-tag>
+            <el-tag v-if="row.kaoshi_zhuangtai === 200">已完成</el-tag>
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_beizhu" label="备注" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kaoshi_beizhu">
+          <span v-if="!showEdit[$index]">{{row.kaoshi_beizhu}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_chuangjianren" label="创建人" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_chuangjianshijian" label="创建时间" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_xiugairen" label="修改人" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaoshi_xiugaishijian" label="修改时间" width="auto">
+      </el-table-column>
+      <!--操作列-->
+      <el-table-column align="center" label="操作" width="240px" fixed="right">
+        <template slot-scope="{row,$index}">
+          <el-button size="mini" @click.native="handleUpdate(row)" v-if="showBtn[$index]">
+            更新
+          </el-button>
+          <el-button size="mini" @click.native="handleCancle($index)" v-if="showBtn[$index]">
+            取消
+          </el-button>
+
+          <el-button size="mini" @click.native="handleEdit($index)" v-if="!showBtn[$index]">
+            编辑
+          </el-button>
+          <!--删除提示-->
+<!--          <el-popover placement="top" >-->
+<!--            <h5 align="center">确定删除？</h5>-->
+<!--            <div style="text-align: center; margin: 0">-->
+<!--              <el-button type="danger" size="mini" @click="deleteRow(row)">确 定</el-button>-->
+<!--            </div>-->
+<!--            <el-button size="mini" slot="reference">删 除</el-button>-->
+<!--          </el-popover>-->
+<!--        </template>-->
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!--新增考试信息弹窗-->
+    <el-dialog title="新增考试信息" :visible.sync="dialogInsertFormVisible">
+      <el-form ref="insertKaoshiFormRef"
+               v-if="true"
+               :rules="insertRules"
+               :model="insertKaoshiForm"
+               label-position="left"
+               label-width="0px">
+        <el-form-item style="width: 100%" prop="kaoshi_shijian">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_shijian"
+                    auto-complete="off"
+                    placeholder="请输入考试时间"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_code">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_code"
+                    auto-complete="off"
+                    placeholder="请输入考试编号"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="xuexiao_mingcheng">
+          <el-select style="width: 100%"
+                     v-model="insertKaoshiForm.xuexiao_mingcheng"
+                     filterable
+                     @change="getJiaoshixingmingByXuexiaoId"
+                     placeholder="请选择学校(可以搜索)">
+            <el-option v-for="item in xuexiaoOptions"
+                       :key="item.xuexiao_id"
+                       :label="item.xuexiao_mingcheng"
+                       :value="item.xuexiao_id">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_mingcheng">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_mingcheng"
+                    auto-complete="off"
+                    placeholder="请输入考试名称"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kemu_mingcheng">
+          <el-select style="width: 100%"
+                     v-model="insertKaoshiForm.kemu_mingcheng"
+                     filterable
+                     placeholder="请选择科目(可以搜索)">
+            <el-option v-for="item in kemuOptions"
+                       :key="item.kemu_id"
+                       :label="item.kemu_mingcheng"
+                       :value="item.kemu_id">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_changci">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_changci"
+                    auto-complete="off"
+                    placeholder="请输入考试场次"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="jiaoshi_xingming">
+          <el-select style="width: 100%"
+                     v-model="insertKaoshiForm.jiaoshi_xingming"
+                     filterable
+                     placeholder="请选择主管教师(可以搜索)">
+            <el-option v-for="item in insertJiaoshiOptions"
+                       :key="item.jiaoshi_id"
+                       :label="item.jiaoshi_xingming"
+                       :value="item.jiaoshi_id">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_canyujiaoshi">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_canyujiaoshi"
+                    auto-complete="off"
+                    placeholder="请输入参与教师"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_renshu">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_renshu"
+                    auto-complete="off"
+                    placeholder="请输入考试人数"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_xueshengmingdan">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_xueshengmingdan"
+                    auto-complete="off"
+                    placeholder="请输入考试学生名单信息"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_baoming">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_baoming"
+                    auto-complete="off"
+                    placeholder="请输入考试报名情况"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_timu">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_timu"
+                    auto-complete="off"
+                    placeholder="请输入考试题目"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_tixing">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_tixing"
+                    auto-complete="off"
+                    placeholder="请输入考试题型"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_shijuan">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_shijuan"
+                    auto-complete="off"
+                    placeholder="请输入考试试卷情况"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_dianzhenbi">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_dianzhenbi"
+                    auto-complete="off"
+                    placeholder="请输入点阵笔准备情况"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_dianzhenzhi">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_dianzhenzhi"
+                    auto-complete="off"
+                    placeholder="请输入点阵纸准备情况"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_kaochangzhunbei">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_kaochangzhunbei"
+                    auto-complete="off"
+                    placeholder="请输入考场准备情况"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_zhuangtai">
+          <el-select style="width: 100%"
+                     v-model="insertKaoshiForm.kaoshi_zhuangtai"
+                     filterable
+                     placeholder="请选择考试状态(可以搜索)">
+            <el-option v-for="item in kaoshi_zhuangtaiOptions"
+                       :key="item.value"
+                       :label="item.label"
+                       :value="item.value">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="kaoshi_beizhu">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKaoshiForm.kaoshi_beizhu"
+                    auto-complete="off"
+                    placeholder="请输入备注"/>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogInsertFormVisible = false">取 消</el-button>
+        <el-button @click="resetForm">重 置</el-button>
+        <el-button type="primary" @click.native.prevent="insertKaoshi">提 交</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+  var qs = require('qs');
+  export default {
+    data() {
+      let validInsertKaoshi_code = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入考试编号！"));
+        } else {
+          callback();
+        }
+      };
+
+      let validInsertXuexiao_mingcheng = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请选择学校名称！"));
+        } else {
+          callback();
+        }
+      };
+
+      let validInsertKaoshi_mingcheng = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请选择考试名称！"));
+        } else {
+          callback();
+        }
+      };
+
+      let validInsertKemu_mingcheng = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请选择科目名称！"));
+        } else {
+          callback();
+        }
+      };
+
+      let validInsertkaoshi_zhuangtai = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请选择考试状态！"));
+        } else {
+          callback();
+        }
+      };
+      return {
+        tableHeight: window.innerHeight * 0.85,
+        tabs: '',
+        dialogInsertFormVisible: false,
+        XueqiDataList: [],
+        KaoshiDataList: [],
+        xuexiaoOptions: [],//学校选项
+        kemuOptions: [],//科目选项
+        insertJiaoshiOptions: [],//主管教师选项
+        updateJiaoshiOptions: [],
+        showEdit: [], //显示编辑框
+        showBtn: [],
+        showSelect: [],
+        //考试状态
+        // （灰色）未开始0、已取消-10、已终止-20
+        // （绿色）筹备中10、正在报名20、已发布30
+        // （红色）正在考试100、阅卷中110、成绩发布120
+        // （黑色）已完成200
+        kaoshi_zhuangtaiOptions: [
+          {
+            value: '0',
+            label: '未开始'
+          },
+          {
+            value: '-10',
+            label: '已取消'
+          },
+          {
+            value: '-20',
+            label: '已终止'
+          },
+          {
+            value: '10',
+            label: '筹备中'
+          },
+          {
+            value: '20',
+            label: '正在报名'
+          },
+          {
+            value: '30',
+            label: '已发布'
+          },
+          {
+            value: '100',
+            label: '正在考试'
+          },
+          {
+            value: '110',
+            label: '阅卷中'
+          },
+          {
+            value: '120',
+            label: '成绩发布'
+          },
+          {
+            value: '200',
+            label: '已完成'
+          }
+        ],
+        insertKaoshiForm: {
+          kaoshi_shijian: '',
+          kaoshi_code: '',
+          xuexiao_mingcheng: '',
+          kaoshi_mingcheng: '',
+          kemu_mingcheng: '',
+          jiaoshi_xingming: '',
+          kaoshi_canyujiaoshi: '',
+          kaoshi_renshu: '',
+          kaoshi_xueshengmingdan: '',
+          kaoshi_baoming: '',
+          kaoshi_timu: '',
+          kaoshi_tixing: '',
+          kaoshi_shijuan: '',
+          kaoshi_dianzhenbi: '',
+          kaoshi_dianzhenzhi: '',
+          kaoshi_kaochangzhunbei: '',
+          kaoshi_zhuangtai: '',
+          kaoshi_beizhu: ''
+        },
+
+        //输入规则
+        insertRules: {
+          kaoshi_shijian: [
+            { required: false, trigger: "blur" }
+          ],
+          kaoshi_code: [
+            { required: true, validator: validInsertKaoshi_code , trigger: "blur" }
+          ],
+          xuexiao_mingcheng: [
+            { required: true, validator: validInsertXuexiao_mingcheng , trigger: "blur"}
+          ],
+          kaoshi_mingcheng: [
+            { required: true, validator: validInsertKaoshi_mingcheng , trigger: "blur"}
+          ],
+          kemu_mingcheng: [
+            { required: true, validator: validInsertKemu_mingcheng ,  trigger: "blur"}
+          ],
+          jiaoshi_xingming: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_canyujiaoshi: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_renshu: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_xueshengmingdan: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_baoming: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_timu: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_tixing: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_shijuan: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_dianzhenbi: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_dianzhenzhi: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_kaochangzhunbei: [
+            { required: false,  trigger: "blur" }
+          ],
+          kaoshi_zhuangtai: [
+            { required: true, validator: validInsertkaoshi_zhuangtai ,  trigger: "blur"}
+          ],
+          kaoshi_beizhu: [
+            { required: false,  trigger: "blur" }
+          ]
+        },
+      };
+    },
+
+    mounted () {
+      this.getAllXueqi();
+      //this.getAllJiaoshi_xingming();
+      this.getAllKemu_mingcheng();
+      this.getAllXuexiao_mingcheng();
+    },
+
+    methods: {
+      //头部tabs选择学期
+      handleTabsChangeGetKaoshi (tab) {
+        var getData = this;
+        var getXueqi_id = tab.name;
+        window.getXueqi_id = getXueqi_id;//将学期Id设置为全局让其他函数取到
+        this.$axios.get('/kaowu/kaoshi/getAllByXueqiId', {
+          params:{
+            xueqi_id:tab.name
+          }
+        })
+          .then((res) => {
+            getData.KaoshiDataList = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取考试信息失败！');
+          })
+      },
+
+      //获取全部学期列表
+      getAllXueqi() {
+        var getData = this;
+        this.$axios.get('manage/xueqi/getAll')
+          .then((res) => {
+            getData.XueqiDataList = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取学期信息失败！');
+          })
+      },
+
+      //新增考试
+      insertKaoshi() {
+        this.$refs.insertKaoshiFormRef.validate((valid) => {
+          console.log(window.getXueqi_id);
+          if (valid) {
+            var params = qs.stringify({
+              kaoshi_shijian: this.insertKaoshiForm.kaoshi_shijian,
+              kaoshi_code: this.insertKaoshiForm.kaoshi_code,
+              xuexiao_id: this.insertKaoshiForm.xuexiao_mingcheng,//选择
+              kaoshi_mingcheng: this.insertKaoshiForm.kaoshi_mingcheng,
+              kemu_id: this.insertKaoshiForm.kemu_mingcheng,//选择
+              jiaoshi_id: this.insertKaoshiForm.jiaoshi_xingming,//选择
+              kaoshi_canyujiaoshi: this.insertKaoshiForm.kaoshi_canyujiaoshi,
+              kaoshi_renshu: this.insertKaoshiForm.kaoshi_renshu,
+              kaoshi_xueshengmingdan: this.insertKaoshiForm.kaoshi_xueshengmingdan,
+              kaoshi_baoming: this.insertKaoshiForm.kaoshi_baoming,
+              kaoshi_timu: this.insertKaoshiForm.kaoshi_timu,
+              kaoshi_tixing: this.insertKaoshiForm.kaoshi_tixing,
+              kaoshi_shijuan: this.insertKaoshiForm.kaoshi_shijuan,
+              kaoshi_dianzhenbi: this.insertKaoshiForm.kaoshi_dianzhenbi,
+              kaoshi_dianzhenzhi: this.insertKaoshiForm.kaoshi_dianzhenzhi,
+              kaoshi_kaochangzhunbei: this.insertKaoshiForm.kaoshi_kaochangzhunbei,
+              kaoshi_zhuangtai: this.insertKaoshiForm.kaoshi_zhuangtai,//选择
+              kaoshi_beizhu: this.insertKaoshiForm.kaoshi_beizhu,
+              xueqi_id: window.getXueqi_id//当前标签页的学期id
+            })
+            this.$axios.post('/kaowu/kaoshi/insertKaoshi', params)
+              .then(res => {
+                if (res.status === 200 && res.data && res.data.code === 200) {
+                  this.$router.go(0);
+                } else if (res.status === 200 && res.data && res.data.code === 201) {
+                  this.$notify({
+                    title: '添加失败！',
+                    type: 'error'
+                  });
+                }
+              });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      },
+      //获取新增时的学校选项
+      getAllXuexiao_mingcheng() {
+        var getData = this;
+        this.$axios.get('manage/xuexiao/getAll')
+          .then((res) => {
+            getData.xuexiaoOptions = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取学校选项失败！');
+          })
+      },
+
+      //根据选择的学校获取新增时的主管教师选
+      //新增
+      getJiaoshixingmingByXuexiaoId(){
+        var getData = this;
+        var xuexiaoId = this.insertKaoshiForm.xuexiao_mingcheng//需要转一下要不报错
+        this.$axios.get('manage/jiaoshi/getJiaoshiXingmingByXuexiaoId',{params: {
+          xuexiao_id: xuexiaoId
+        }})
+          .then((res) => {
+            getData.insertJiaoshiOptions = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取主管教师教师选项失败！');
+          })
+      },
+      //修改
+      getJiaoshixingmingByXuexiaoIdUpdate(row){
+        var getData = this;
+        var xuexiaoId = row.xuexiao_id//需要转一下要不报错
+        console.log(xuexiaoId)
+        this.$axios.get('manage/jiaoshi/getJiaoshiXingmingByXuexiaoId',{params: {
+            xuexiao_id: xuexiaoId
+          }})
+          .then((res) => {
+            getData.updateJiaoshiOptions = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取主管教师教师选项失败！');
+          })
+      },
+
+      //获取新增时的主管教师选项
+      // getAllJiaoshi_xingming() {
+      //   var getData = this;
+      //   this.$axios.get('manage/jiaoshi/getAll')
+      //     .then((res) => {
+      //       getData.jiaoshiOptions = res.data.result;
+      //     })
+      //     .catch((err) =>{
+      //       console.log(err);
+      //       alert('获取主管教师教师选项失败！');
+      //     })
+      // },
+
+      //获取新增时的科目选项
+      getAllKemu_mingcheng() {
+        var getData = this;
+        this.$axios.get('manage/kemu/getAll')
+          .then((res) => {
+            getData.kemuOptions = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取科目选项失败！');
+          })
+      },
+
+      //重置表单
+      resetForm() {
+        this.$refs.insertKaoshiFormRef.resetFields();
+      },
+
+      //编辑（行）
+      //点击编辑
+      handleEdit(index) {
+        this.$set(this.showEdit,index,true)
+        this.$set(this.showSelect,index,true)
+        this.$set(this.showBtn,index,true)
+      },
+      // //取消编辑
+      handleCancle(index) {
+        this.$set(this.showEdit,index,false)
+        this.$set(this.showSelect,index,false)
+        this.$set(this.showBtn,index,false)
+      },
+      // //点击更新
+      handleUpdate(row) {
+        var params = qs.stringify({
+          kaoshi_id: row.kaoshi_id,
+          kaoshi_shijian: row.kaoshi_shijian,
+          kaoshi_code: row.kaoshi_code,
+          xuexiao_id: row.xuexiao_id,//选择
+          kaoshi_mingcheng: row.kaoshi_mingcheng,
+          kemu_id: row.kemu_id,//选择
+          jiaoshi_id: row.jiaoshi_id,//选择
+          kaoshi_canyujiaoshi: row.kaoshi_canyujiaoshi,
+          kaoshi_renshu: row.kaoshi_renshu,
+          kaoshi_xueshengmingdan: row.kaoshi_xueshengmingdan,
+          kaoshi_baoming: row.kaoshi_baoming,
+          kaoshi_timu: row.kaoshi_timu,
+          kaoshi_tixing: row.kaoshi_tixing,
+          kaoshi_shijuan: row.kaoshi_shijuan,
+          kaoshi_dianzhenbi: row.kaoshi_dianzhenbi,
+          kaoshi_dianzhenzhi: row.kaoshi_dianzhenzhi,
+          kaoshi_kaochangzhunbei: row.kaoshi_kaochangzhunbei,
+          kaoshi_zhuangtai: row.value,//选择
+          kaoshi_beizhu: row.kaoshi_beizhu,
+          xueqi_id: window.getXueqi_id//当前标签页的学期id
+        })
+        this.$axios.post('kaowu/kaoshi/updateSingleKaoshi', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '恭喜你，这是一条成功消息',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$notify({
+                title: '添加失败！',
+                type: 'error'
+              });
+            }
+          });
+      },
+      // //表格过滤
+      // resetDateFilter() {
+      //   this.$refs.filterTable.clearFilter('date');
+      // },
+      // clearFilter() {
+      //   this.$refs.filterTable.clearFilter();
+      // },
+      // formatter(row, column) {
+      //   return row.address;
+      // },
+      // filterTag(value, row) {
+      //   return row.tag === value;
+      // },
+      // filterHandler(value, row, column) {
+      //   const property = column['property'];
+      //   return row[property] === value;
+      // }
+    }
+  };
+</script>
+
+<style scoped>
+
+</style>

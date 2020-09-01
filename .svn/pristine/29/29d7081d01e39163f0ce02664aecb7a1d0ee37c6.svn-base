@@ -1,0 +1,326 @@
+<template>
+  <div>
+    <div style="text-align: left; margin: 5px">
+      <el-button @click="dialogInsertFormVisible = true">新增教师信息</el-button>
+      <el-button @click="cancelSelection()">取消全选</el-button>
+    </div>
+
+    <!--    教师信息表格-->
+    <el-table :default-sort = "{prop: 'xuexiao_mingcheng'}"
+              :height="tableHeight"
+              ref="jiaoshiTable"
+              border
+              :data="jiaoshiData"
+              tooltip-effect="dark"
+              :model="jiaoshiForm"
+              style="width: auto">
+      <!--多选框-->
+      <el-table-column type="selection" width="auto"></el-table-column>
+      <el-table-column sortable align="center" prop="xuexiao_mingcheng" label="学校名称" width="auto">
+        <template slot-scope="{row,$index}">
+          <el-select v-if="showSelect[$index]"
+                     style="width: 100%"
+                     v-model="row.xuexiao_id"
+                     filterable
+          >
+            <el-option
+              v-for="item in xuexiaoOptions"
+              :key="item.xuexiao_id"
+              :label="item.xuexiao_mingcheng"
+              :value="item.xuexiao_id">
+            </el-option>
+          </el-select>
+          <span v-if="!showSelect[$index]">{{row.xuexiao_mingcheng}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="jiaoshi_xingming" label="教师姓名" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.jiaoshi_xingming">
+          <span v-if="!showEdit[$index]">{{row.jiaoshi_xingming}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column align="center" prop="jiaoshi_shoujihaoma" label="教师手机号码">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.jiaoshi_shoujihaoma">
+          <span v-if="!showEdit[$index]">{{row.jiaoshi_shoujihaoma}}</span>
+        </template>
+      </el-table-column>
+      <!--操作列-->
+      <el-table-column align="center" label="操作" width="240px" fixed="right">
+        <template slot-scope="{row,$index}">
+          <el-button size="mini" @click.native="handleUpdate(row)" v-if="showBtn[$index]">
+            更新
+          </el-button>
+          <el-button size="mini" @click.native="handleCancle($index)" v-if="showBtn[$index]">
+            取消
+          </el-button>
+
+          <el-button size="mini" @click.native="handleEdit($index)" v-if="!showBtn[$index]">
+            编辑
+          </el-button>
+          <!--删除提示-->
+          <el-popover placement="top" >
+            <h5 align="center">确定删除？</h5>
+            <div style="text-align: center; margin: 0">
+              <el-button type="danger" size="mini" @click="deleteRow(row)">确 定</el-button>
+            </div>
+            <el-button size="mini" slot="reference">删 除</el-button>
+          </el-popover>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!--新增教师信息弹窗-->
+    <el-dialog title="新增教师信息" :visible.sync="dialogInsertFormVisible">
+      <el-form ref="insertJiaoshiFormRef"
+               v-if="true"
+               :rules="insertRules"
+               :model="insertJiaoshiForm"
+               label-position="left"
+               label-width="0px">
+        <el-form-item style="width: 100%" prop="xuexiao_mingcheng">
+          <el-select style="width: 100%"
+                     v-model="insertJiaoshiForm.xuexiao_mingcheng"
+                     filterable
+                     placeholder="请选择教师所属学校(可以搜索)">
+            <el-option v-for="item in xuexiaoOptions"
+                       :key="item.xuexiao_id"
+                       :label="item.xuexiao_mingcheng"
+                       :value="item.xuexiao_id">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="jiaoshi_xingming">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertJiaoshiForm.jiaoshi_xingming"
+                    auto-complete="off"
+                    placeholder="请输入教师姓名"/>
+        </el-form-item>
+        <el-form-item style="width: 100%" prop="jiaoshi_shoujihaoma">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertJiaoshiForm.jiaoshi_shoujihaoma"
+                    auto-complete="off"
+                    placeholder="请输入教师手机号码"/>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogInsertFormVisible = false">取 消</el-button>
+        <el-button @click="resetForm">重 置</el-button>
+        <el-button type="primary" @click.native.prevent="insertJiaoshi">提 交</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+  import {isvalidUser} from '../Login'
+
+  var qs = require('qs');
+
+  export default {
+    name: "JiaoshiManage",
+
+    data () {
+      //新增输入校验
+      let validInsert = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入教师名称！"));
+        } else {
+          callback();
+        }
+      };
+      let validInsert1 = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入教师手机号！"));
+        } else {
+          callback();
+        }
+      };
+
+      return {
+        tableHeight: window.innerHeight * 0.85,
+        insertJiaoshiForm: {
+          jiaoshi_xingming: '',
+          jiaoshi_shoujihaoma: '',
+          xuexiao_mingcheng: ''
+        },
+
+        //输入规则
+        insertRules: {
+          jiaoshi_xingming: [
+            { required: true, validator: validInsert, trigger: "blur" }
+          ],
+          jiaoshi_shoujihaoma: [
+            { required: true, validator: validInsert1, trigger: "blur" }
+          ]
+        },
+        dialogInsertFormVisible: false,
+        dialogUpdateFormVisible: false,
+        jiaoshiData: [],
+        showEdit: [], //显示编辑框
+        showBtn: [],
+        showSelect: [],
+        showBtnOrdinary: true,
+        loading: true,
+        xuexiaoOptions: []
+      }
+    },
+
+    mounted () {
+      this.getAllJiaoshi();
+      this.getAllXuexiao_mingcheng();
+    },
+
+    methods: {
+      //新增教师
+      insertJiaoshi() {
+        this.$refs.insertJiaoshiFormRef.validate((valid) => {
+          if (valid) {
+            var params = qs.stringify({
+              xuexiao_id: this.insertJiaoshiForm.xuexiao_mingcheng,
+              jiaoshi_xingming: this.insertJiaoshiForm.jiaoshi_xingming,
+              jiaoshi_shoujihaoma: this.insertJiaoshiForm.jiaoshi_shoujihaoma
+            })
+            this.$axios.post('/manage/jiaoshi/insertJiaoshi', params)
+              .then(res => {
+                if (res.status === 200 && res.data && res.data.code === 200) {
+                  this.$router.go(0);
+                } else if (res.status === 200 && res.data && res.data.code === 201) {
+                  this.$notify({
+                    title: '添加失败！',
+                    type: 'error'
+                  });
+                }
+              });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      },
+
+      //获取新增时的学校选项
+      getAllXuexiao_mingcheng() {
+        var getData = this;
+        this.$axios.get('manage/xuexiao/getAll')
+          .then((res) => {
+            getData.xuexiaoOptions = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取学校选项失败！');
+          })
+      },
+
+      //重置表单
+      resetForm() {
+        this.$refs.insertJiaoshiFormRef.resetFields();
+      },
+
+      //取消全选
+      cancelSelection() {
+        this.$refs.jiaoshiTable.clearSelection();
+      },
+
+      //获取全部教师列表
+      getAllJiaoshi() {
+        var getData = this;
+        this.$axios.get('manage/jiaoshi/getAll')
+          .then((res) => {
+            getData.jiaoshiData = res.data.result;
+            this.getSpanData(this.jiaoshiData);
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取教师信息失败！');
+          })
+      },
+      getSpanData(data) {
+        this.spanData = [];
+        for (var i = 0; i < data.length; i++) {
+          if (i === 0) {
+            this.spanData.push(1);
+            this.pos = 0
+          } else {
+            // 判断当前元素与上一个元素是否相同
+            if (data[i].xuexiao_id === data[i - 1].xuexiao_id) {
+              this.spanData[this.pos] += 1;
+              this.spanData.push(0);
+            } else {
+              this.spanData.push(1);
+              this.pos = i;
+            }
+          }
+        }
+      },
+
+      //编辑（行）
+      //点击编辑
+      handleEdit(index) {
+        this.$set(this.showEdit,index,true)
+        this.$set(this.showSelect,index,true)
+        this.$set(this.showBtn,index,true)
+      },
+      // //取消编辑
+      handleCancle(index) {
+        this.$set(this.showEdit,index,false)
+        this.$set(this.showSelect,index,false)
+        this.$set(this.showBtn,index,false)
+      },
+      // //点击更新
+      handleUpdate(row) {
+        var params = qs.stringify({
+          xuexiao_id: row.xuexiao_id,
+          jiaoshi_id: row.jiaoshi_id,
+          jiaoshi_xingming: row.jiaoshi_xingming,
+          jiaoshi_shoujihaoma: row.jiaoshi_shoujihaoma
+        })
+        this.$axios.post('/manage/jiaoshi/updateSingleJiaoshi', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '更改成功！',
+                type: 'success',
+                center: true
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$message({
+                message: '更改失败！',
+                type: 'error',
+                center: true
+              });
+            }
+          });
+      },
+
+      //删除（行）
+      deleteRow(row) {
+        var params = qs.stringify({
+          jiaoshi_id: row.jiaoshi_id
+        })
+        this.$axios.post('/manage/jiaoshi/deleteSingleJiaoshi', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '恭喜你，这是一条成功消息',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$notify({
+                title: '删除失败！',
+                type: 'error'
+              });
+            }
+          });
+      }
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>

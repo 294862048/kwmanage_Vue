@@ -1,0 +1,224 @@
+<template>
+  <div>
+    <div style="text-align:left" class="headtext">
+      <p style="font-size: 25px">个人信息</p>
+    </div>
+
+<!--    自定义div展示个人信息-->
+    <div id="all">
+      <div class="info">
+        <div class="info-box">
+          <div class="left-div">用户名</div>
+          <div class="right-div">
+            <span>{{personInfoData.login_username}}</span>
+          </div>
+        </div>
+        <div class="info-box">
+          <div class="left-div">姓名</div>
+          <div class="right-div">
+            <input style="width: 100%" id="user_nameEdit" v-if="showEdit" v-model="personInfoData.user_name">
+            <span v-if="!showEdit">{{personInfoData.user_name}}</span>
+          </div>
+        </div>
+        <div class="info-box">
+          <div class="left-div">性别</div>
+          <div class="right-div">
+            <el-select v-if="showSelect"
+                       style="width: 100%"
+                       v-model="personInfoData.user_sex"
+                       filterable
+            >
+              <el-option
+                id="user_sexSelect"
+                v-for="item in user_sexOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+            <span v-if="!showSelect">
+              <span type="info" v-if="personInfoData.user_sex === 0">保密</span>
+              <span type="" v-if="personInfoData.user_sex === 1">男</span>
+              <span type="danger" v-if="personInfoData.user_sex === 2">女</span>
+            </span>
+          </div>
+        </div>
+        <div class="info-box">
+          <div class="left-div">账号级别</div>
+          <div class="right-div">
+            <el-tag effect="dark" type="success" v-if="personInfoData.user_level === 1">用户</el-tag>
+            <el-tag effect="dark" type="warning" v-else-if="personInfoData.user_level === 2">管理员</el-tag>
+          </div>
+        </div>
+      </div>
+      <div>
+        <el-button size="mini" @click.native="handleUpdate()" v-if="showBtn">
+          更新
+        </el-button>
+        <el-button size="mini" @click.native="handleCancle()" v-if="showBtn">
+          取消
+        </el-button>
+
+        <el-button size="mini" @click.native="handleEdit()" v-if="!showBtn">
+          编辑
+        </el-button>
+<!--        <el-button size="mini" @click.native="zhuxiao()">-->
+<!--          注销-->
+<!--        </el-button>-->
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  var qs = require('qs');
+  export default {
+    name: "PersonInfo",
+    data () {
+      return {
+        personInfoTable: {
+          user: '',
+          username: ''
+        },
+        personInfoData: [],
+        showEdit: false, //显示编辑框
+        showBtn: false,
+        showSelect: false,
+        // 保密0，男1，女2
+        user_sexOptions: [
+          {
+            value: '0',
+            label: '保密'
+          },
+          {
+            value: '1',
+            label: '男'
+          },
+          {
+            value: '2',
+            label: '女'
+          }
+        ]
+      }
+    },
+
+    mounted () {
+      this.getInfoByUserId();
+    },
+
+    methods: {
+      getInfoByUserId() {
+        var getData = this;
+        var params = qs.stringify({
+          user_id: sessionStorage.getItem("user_id")
+        });
+        this.$axios.post('person/getInfo',params)
+          .then((res) => {
+            getData.personInfoData = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取个人信息失败！');
+          })
+      },
+      //编辑（行）
+      //点击编辑
+      handleEdit() {
+        this.showEdit = true
+        this.showSelect = true
+        this.showBtn = true
+      },
+      // //取消编辑
+      handleCancle() {
+        this.showEdit = false
+        this.showSelect = false
+        this.showBtn = false
+      },
+      // 点击更新
+      handleUpdate() {
+        var params = qs.stringify({
+          //从sessionStorage取用户id传入后端
+          user_id: sessionStorage.getItem("user_id"),
+          user_name: document.getElementById("user_nameEdit").value,
+          user_sex: this.personInfoData.user_sex,
+          user_level: this.personInfoData.user_level
+        })
+        this.$axios.post('person/updateInfo', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '修改成功！',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$message({
+                message: '修改失败！',
+                type: 'error',
+              });
+            } else if (res.status === 200 && res.data && res.data.code === 202) {
+              this.$message({
+                message: '用户名重复！',
+                type: 'error',
+              });
+            }
+          });
+      },
+
+      // //账号注销
+      // zhuxiao() {
+      //   var params = qs.stringify({
+      //     //从sessionStorage取用户id传入后端
+      //     user_id: sessionStorage.getItem("user_id"),
+      //     user_name: document.getElementById("user_nameEdit").value,
+      //     user_sex: this.personInfoData.user_sex,
+      //     user_level: this.personInfoData.user_level
+      //   })
+      //   this.$axios.post('person/updateInfo', params)
+      //     .then(res => {
+      //       if (res.status === 200 && res.data && res.data.code === 200) {
+      //         this.$message({
+      //           message: '注销成功！',
+      //           type: 'success',
+      //         });
+      //         this.$router.go(0);
+      //       } else if (res.status === 200 && res.data && res.data.code === 201) {
+      //         this.$message({
+      //           message: '修改失败！',
+      //           type: 'error',
+      //         });
+      //       } else if (res.status === 200 && res.data && res.data.code === 202) {
+      //         this.$message({
+      //           message: '用户名重复！',
+      //           type: 'error',
+      //         });
+      //       }
+      //     });
+      // }
+    }
+  }
+</script>
+
+<style scoped>
+  #all{
+    text-align: left;
+  }
+  .left-div {
+    width: 120px;
+    line-height: 20px;
+    padding: 20px 0;
+    text-align: center;
+    background-color: #f3f5f7;
+    color: #07111b;
+    font-weight: 700;
+    display: inline-block;
+  }
+  .right-div {
+    width: 480px;
+    line-height: 20px;
+    padding: 20px 0 20px 22px;
+    border-bottom: 1px solid #d9dde1;
+    text-align: left;
+    display: inline-block;
+  }
+</style>

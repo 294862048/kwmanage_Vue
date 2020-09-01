@@ -1,0 +1,108 @@
+<template>
+  <div class="home-tabs" style="margin-left: 10px">
+    <el-tabs v-model="ActiveName" @tab-click="handleTabsChange">
+      <el-tab-pane v-for="(item,index) in XueqiDataList" :key="index" :label="item.xueqi_mingcheng" :name="item.xueqi_id">
+        <component :is='item.xuexiao_id'></component>
+      </el-tab-pane>
+    </el-tabs>
+    <!--    教师信息表格-->
+    <el-table ref="jiaoshiTable" border :data="KaoshiDataList" :span-method="handleObjectSpanMethod" tooltip-effect="dark" style="width: auto">
+      <!--多选框-->
+      <el-table-column type="selection" width="auto"></el-table-column>
+      <el-table-column align="center" prop="kaowu_shijian" label="考试时间" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="xuexiao_mingcheng" label="学校名称" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kemu_mingcheng" label="科目名称" width="auto">
+      </el-table-column>
+      <el-table-column align="center" prop="kaowu_kaoshi" label="考试">
+      </el-table-column>
+      <el-table-column align="center" prop="kaowu_kaoshi" label="考试">
+      </el-table-column>
+      <el-table-column align="center" prop="jiaoshi_xingming" label="教师姓名" width="auto">
+<!--        <template slot-scope="{row,$index}">-->
+<!--          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.jiaoshi_xingming">-->
+<!--          <span v-if="!showEdit[$index]">{{row.jiaoshi_xingming}}</span>-->
+<!--        </template>-->
+      </el-table-column>
+      <!--操作列-->
+      <el-table-column align="center" label="操作" width="240px" fixed="right">
+<!--        <template slot-scope="{row,$index}">-->
+<!--          <el-button size="mini" @click.native="handleUpdate(row)" v-if="showBtn[$index]">-->
+<!--            更新-->
+<!--          </el-button>-->
+<!--          <el-button size="mini" @click.native="handleCancle($index)" v-if="showBtn[$index]">-->
+<!--            取消-->
+<!--          </el-button>-->
+
+<!--          <el-button size="mini" @click.native="handleEdit($index)" v-if="!showBtn[$index]">-->
+<!--            编辑-->
+<!--          </el-button>-->
+          <!--删除提示-->
+<!--          <el-popover placement="top" >-->
+<!--            <h5 align="center">确定删除？</h5>-->
+<!--            <div style="text-align: center; margin: 0">-->
+<!--              <el-button type="danger" size="mini" @click="deleteRow(row)">确 定</el-button>-->
+<!--            </div>-->
+<!--            <el-button size="mini" slot="reference">删 除</el-button>-->
+<!--          </el-popover>-->
+<!--        </template>-->
+      </el-table-column>
+    </el-table>
+  </div>
+</template>
+
+<script>
+  export default {
+    data() {
+      return {
+        activeName: "windows",
+        XueqiDataList: [],
+        KaoshiDataList: []
+      };
+    },
+
+    mounted () {
+      this.getAllXueqi();
+    },
+
+    methods: {
+      getAllKaoshiByXueqiId() {
+        var params = qs.stringify({
+          xueqi_id: this.xueqi_id
+        })
+        var getData = this;
+        this.$axios.get('kaowu/kaoshi/getAllByXueqiId')
+          .then((res) => {
+            getData.KaoshiDataList = res.data.result;
+            //this.getSpanData(this.jiaoshiData);
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取考试信息失败！');
+          })
+      },
+
+      handleTabsChange (tab) {
+        this.$store.commit('handleTabsChange', tab.name)
+      },
+
+      //获取全部学期列表
+      getAllXueqi() {
+        var getData = this;
+        this.$axios.get('manage/xueqi/getAll')
+          .then((res) => {
+            getData.XueqiDataList = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取学期信息失败！');
+          })
+      },
+    }
+  };
+</script>
+
+<style scoped>
+
+</style>

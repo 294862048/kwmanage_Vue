@@ -1,0 +1,363 @@
+<template>
+  <el-row :gutter="20">
+    <el-col :span="8"><div class="grid-content bg-purple">
+      <!--登录表单-->
+      <el-form ref="loginFormRef" v-if="true" class="login-container" label-position="left" label-width="0px" :rules="loginRules" :model="loginForm">
+        <h1 class="login_title">TAT考务管理系统</h1>
+        <el-form-item prop="username">
+          <el-input :clearable="true" :validate-event="true" type="text" v-model="loginForm.username" auto-complete="off" placeholder="请输入账号"/>
+        </el-form-item>
+        <br>
+        <el-form-item prop="password">
+          <el-input :clearable="true" :show-password="true" :validate-event="true" type="password" v-model="loginForm.password" auto-complete="off" placeholder="请输入密码"/>
+        </el-form-item>
+        <br><br><br>
+        <el-form-item style="width: 100%" >
+          <el-button round type="primary" style="width: 100%;border: none" @click="login">登录</el-button>
+        </el-form-item>
+        <el-form-item style="width: 100%">
+          <el-button round style="width: 100%;" @click="dialogFormVisible = true">注册</el-button>
+        </el-form-item>
+
+        <!--注册表单-->
+        <el-dialog title="注册" :visible.sync="dialogFormVisible">
+          <el-form ref="registerFormRef" v-if="true" :rules="registerRules" :model="registerForm" label-position="left" label-width="0px">
+            <el-form-item style="width: 100%" prop="user">
+              <el-input :clearable="true" :validate-event="true" type="text" v-model="registerForm.user" auto-complete="off" placeholder="请输入真实姓名"/>
+            </el-form-item>
+            <el-form-item style="width: 100%" prop="username">
+              <el-input :clearable="true" :validate-event="true" type="text" v-model="registerForm.username" auto-complete="off" placeholder="请输入账号"/>
+            </el-form-item>
+            <el-form-item style="width: 100%" prop="password">
+              <el-input :clearable="true" :show-password="true" :validate-event="true" type="password" v-model="registerForm.password" auto-complete="off" placeholder="请输入密码"/>
+            </el-form-item>
+            <el-form-item style="width: 100%" prop="repassword">
+              <el-input :clearable="true" :show-password="true" :validate-event="true" type="password" v-model="registerForm.repassword" auto-complete="off" placeholder="请确认密码"/>
+            </el-form-item>
+          </el-form>
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogFormVisible = false">取 消</el-button>
+            <el-button @click="resetForm">重 置</el-button>
+            <el-button type="primary" @click.native.prevent="register">注 册</el-button>
+          </div>
+        </el-dialog>
+      </el-form>
+    </div>
+    </el-col>
+
+<!--    App版本表-->
+    <el-col :span="16">
+      <div id="appvar" class="grid-content bg-purple">
+        <el-table :data="appVerData" height="800px" width="730">
+          <el-table-column prop="程序ID" label="程序ID" width="350">
+          </el-table-column>
+          <el-table-column prop="程序名称" label="程序名称" width="180">
+          </el-table-column>
+          <el-table-column prop="版本号" label="版本号" width="100">
+          </el-table-column>
+          <el-table-column prop="更新时间" label="更新时间">
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-col>
+  </el-row>
+</template>
+
+<script>
+  //验证姓名 必须为中文
+  export function isvalidUser(str) {
+    const reg = /[\u4e00-\u9fa5]/;
+    return reg.test(str);
+  }
+
+  // 验证密码   密码，以字母开头，长度在8~18之间，只能包含字母、数字和下划线
+  export function isvalidPass(str) {
+    const reg = /^[a-zA-Z]\w{8,18}$/;
+    return reg.test(str);
+  }
+
+  //验证账号  账号要求 数字、字母、下划线的组合，其中数字和字母必须同时存在
+  export function isvalidUsername(str) {
+    const reg = /^(?![^A-Za-z]+$)(?![^0-9]+$)[0-9A-Za-z_]{4,15}$/;
+    return reg.test(str);
+  }
+
+  var qs = require('qs');
+
+  export default {
+    name: 'Login',
+
+    data () {
+      //姓名校验
+      let validUser = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入用户的真实姓名！"));
+        } else if (!isvalidUser(value)) {
+          callback(new Error("姓名必须为纯中文！"));
+        } else {
+          callback();
+        }
+      };
+
+      //账号校验
+      let validUsername = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入账号！"));
+        } else if (!isvalidUsername(value)) {
+          callback(new Error("账号要求数字、字母、下划线的组合 数字和字母必须存在 长度为4-15个字符"));
+        } else {
+          callback();
+        }
+      };
+
+      //密码校验
+      let validatePass = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入密码！"));
+        } else if (!isvalidPass(value)) {
+          callback(new Error("密码以字母开头 长度在8~18之间 只能包含字母、数字和下划线"));
+        } else {
+          if (this.registerForm.repassword !== "") {
+            this.$refs.registerFormRef.validateField("repassword");
+          }
+          callback();
+        }
+      };
+
+      //二次密码校验
+      let validatePass2 = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入确认密码！"));
+        } else if (value !== this.registerForm.password) {
+          callback(new Error("两次输入密码不一致！"));
+        } else {
+          callback();
+        }
+      };
+
+      return {
+        loginForm: {
+          username: '',
+          password: ''
+        },
+
+        loginipData: {
+          ip:'',
+          city:'',
+          device:'',
+          os:''
+        },
+
+        registerForm: {
+          user: '',
+          username: '',
+          password: '',
+          repassword: ''
+        },
+
+        //登录表单规则
+        loginRules: {
+          username: [
+            { required: true, message: '请填写账号！', trigger: "blur" }
+          ],
+          password: [
+            { required: true, message: '请填写密码！', trigger: "blur" }
+          ]
+        },
+
+        //注册表单规则
+        registerRules: {
+          user: [
+            { required: true, validator: validUser, trigger: "blur" }
+          ],
+          username: [
+            { required: true, validator: validUsername, trigger: "blur" }
+          ],
+          password: [
+            { required: true, validator: validatePass, trigger: "blur" }
+          ],
+          repassword: [
+            { required: true, validator: validatePass2, trigger: "blur" }
+          ]
+        },
+        dialogFormVisible: false,
+        responseResult: [],
+        loading: true,
+        changValue: null,
+        appVerData: []
+      }
+    },
+
+    mounted:function () {
+      this.getAppVerData();
+      this.getLoginipData();
+    },
+
+    methods: {
+      // 登录
+      login() {
+        this.$refs.loginFormRef.validate((valid) => {
+          if(valid){
+            this.$axios.post('/login', {
+              login_username: this.loginForm.username,
+              login_password: this.loginForm.password
+            })
+              .then(res => {
+                if (res.status === 200 && res.data && res.data.code === 200) {
+                  this.$message({
+                    message: '登录成功！',
+                    type: 'success',
+                    center: true
+                  });
+
+                  //等后将常用信息存入localStorage
+                  localStorage.setItem("user_id",res.data.result.user_id);
+                  localStorage.setItem("user_name",res.data.result.user_name);
+                  localStorage.setItem("login_username",res.data.result.login_username);
+                  localStorage.setItem("user_sex",res.data.result.user_sex);
+                  localStorage.setItem("user_level",res.data.result.user_level);
+
+                  //登录成功后发送登录信息
+                  var params = qs.stringify({
+                    ip_city: this.loginipData.city,
+                    ip_ip: this.loginipData.ip,
+                    ip_device: this.loginipData.device,
+                    ip_OS: this.loginipData.os
+                  })
+                  this.$axios.post('/loginip/insert', params)
+                    .then(res1 => {
+                      if (res1.status === 200 && res1.data && res1.data.code === 201) {
+                        this.$message({
+                          message: '添加登录信息失败！',
+                          type: 'error',
+                          center: true
+                        });
+                      }
+                    });
+                  //跳转到主页面
+                  this.$router.replace({path: '/index'})
+                } else if (res.status === 200 && res.data && res.data.code === 201) {
+                  this.$message({
+                    message: '登录失败！密码错误！',
+                    type: 'error',
+                    center: true
+                  });
+                } else if (res.status === 200 && res.data && res.data.code === 202) {
+                  this.$message({
+                    message: '登录失败！账号不存在！',
+                    type: 'warning',
+                    center: true
+                  });
+                }
+              })
+              .catch(failResponse => {})
+          }else {
+            return false;
+          }
+        });
+      },
+
+      //注册
+      register() {
+        this.$refs.registerFormRef.validate((valid) => {
+          if (valid) {
+            this.$axios.post('/register', {
+              user_name: this.registerForm.user,
+              login_username: this.registerForm.username,
+              login_password: this.registerForm.password
+            })
+              .then(res => {
+                if (res.status === 200 && res.data && res.data.code === 200) {
+                  this.$message({
+                    message: '注册成功！请登录!',
+                    type: 'success',
+                    center: true
+                  });
+                  this.$router.go(0);
+                } else if(res.status === 200 && res.data && res.data.code === 201) {
+                  this.$message({
+                    message: '注册失败！请重试！',
+                    type: 'error',
+                    center: true
+                  });
+                }else if(res.status === 200 && res.data && res.data.code === 202) {
+                  this.$message({
+                    message: '账号已存在！请更换账号！',
+                    type: 'warning',
+                    center: true
+                  });
+                }
+              })
+              .catch(err => {
+                console.log(err);
+              });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      },
+
+      //重置表单
+      resetForm() {
+        this.$refs.registerFormRef.resetFields();
+      },
+
+      //获取登录信息
+      getLoginipData() {
+        var that = this;
+        this.$axios({
+            url:'http://ip-api.com/json/?lang=zh-CN',
+            method: 'post',
+            withCredentials: false //main.js中cookie配置导致跨域问题，通过这个解决
+        })
+        .then((res) =>{
+          that.loginipData.ip = res.data.query
+          that.loginipData.city = res.data.country + ' ' + res.data.regionName + res.data.city
+          that.loginipData.device = that.$IpUtils.GetCurrentBrowser()
+          that.loginipData.os = that.$IpUtils.GetOs()
+        })
+      },
+
+      //获取软件信息json
+      getAppVerData() {
+        var getData = this;
+        this.$axios.get('/getAppVar')
+        .then((res) => {
+          if (res.status === 200 && res.data && res.data.code === 200) {
+            getData.appVerData = JSON.parse(res.data.result);
+          } else if(res.status === 200 && res.data && res.data.code === 201) {
+            alert('获取AppVerData失败！');
+          }
+        })
+        .catch(err =>{
+          console.log(err);
+        })
+      }
+    }
+  }
+</script>
+
+<style>
+  .login-container {
+    border-radius: 15px;
+    background-clip: padding-box;
+    margin: 30px auto;
+    width: 350px;
+    height: 500px;
+    padding: 35px 35px 15px 35px;
+    background: #fff;
+    border: 1px solid #eaeaea;
+    box-shadow: 0 0 25px #cac6c6;
+  }
+
+  .login_title {
+    margin: 0px auto 40px auto;
+    text-align: center;
+    color: #505458;
+  }
+
+  #appvar {
+    margin-top: 50px;
+  }
+</style>

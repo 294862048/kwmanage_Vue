@@ -1,0 +1,15 @@
+<template>
+  <!--天气，公告，日历-->
+  <el-calendar v-model="value">
+  </el-calendar>
+</template>
+
+<script>
+  export default {
+    name: 'IndexTools',
+  }
+</script>
+
+<style scoped>
+
+</style>

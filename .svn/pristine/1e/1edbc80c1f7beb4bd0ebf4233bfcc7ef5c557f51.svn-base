@@ -1,0 +1,156 @@
+<template>
+  <div class="zgz-admin-index-aside">
+    <el-col :span="24">
+        <div>
+
+        </div>
+        <!--
+      :default-active="$route.name"
+          获取router路由的name 对应menu-item内的index
+      为了对应 tabs 的跳转点击 做选中
+      -->
+  <!--      鼠标触碰自动弹出  @mouseenter.native="collapseOpen" @mouseleave.native="collapseClose"-->
+        <el-menu :default-active="$route.name" :collapse="isCollapse" >
+          <el-menu-item>
+            <h1>TAT</h1>
+          </el-menu-item>
+          <!-- 循环数据格式 -->
+          <el-submenu :index="`${index}`" v-for="(menu,index) in menuList" :key="index">
+            <template slot="title">
+              <i :class="menu.icont"></i>
+              <span>{{menu.name}}</span>
+            </template>
+            <el-menu-item-group>
+              <el-menu-item :index="item.routeName" v-for="item in menu.menuItem" :key="item.index" @click="handleOpen2(item)">{{item.name}}</el-menu-item>
+            </el-menu-item-group>
+          </el-submenu>
+
+
+
+  <!--        关闭侧边栏-->
+          <el-menu-item v-show="isCollapseStatusClose"  @click="collapseStatusClose">
+            <i class="el-icon-arrow-left"></i>
+          </el-menu-item>
+  <!--        打开侧边栏-->
+          <el-menu-item v-show="isCollapseStatusOpen" @click="collapseStatusOpen">
+              <i class="el-icon-arrow-right"></i>
+          </el-menu-item>
+          <!--登出-->
+          <el-menu-item style="padding-bottom: 10px">
+            <i class="el-icon-switch-button" v-on:click="logout" ></i>
+          </el-menu-item>
+        </el-menu>
+    </el-col>
+  </div>
+</template>
+
+<script>
+  import { mapActions } from 'vuex'
+  export default {
+    name: 'zgz-admin-index-aside',
+    components: {},
+    data() {
+      return {
+        collapseBtnClick: true,
+        isCollapse: true,
+        isRouter: true,
+        isCollapseStatusClose: false,
+        isCollapseStatusOpen: true,
+        // 将所需submenu,menu和tabs所需参数写成数据格式
+        menuList: [
+          {
+            icont: 'el-icon-user-solid',
+            name: '个人中心',
+            menuItem: [
+              {
+                title: '个人信息',
+                routeName: 'PersonInfo',
+                name: '个人信息'
+              },
+              {
+                title: '登录记录',
+                routeName: 'PersonIP',
+                name: '登录记录'
+              }
+            ]
+          },
+          {
+            icont: 'el-icon-set-up',
+            name: '管理模块',
+            menuItem: [
+              {
+                title: '科目管理',
+                routeName: 'KemuManage',
+                name: '科目管理'
+              },
+              {
+                title: '学校管理',
+                routeName: 'XuexiaoManage',
+                name: '学校管理'
+              },
+              {
+                title: '教师管理',
+                routeName: 'JiaoshiManage',
+                name: '教师管理'
+              },
+              {
+                title: '学期管理',
+                routeName: 'XueqiManage',
+                name: '学期管理'
+              }
+            ]
+          },
+          {
+            icont: 'el-icon-edit',
+            name: '考务模块',
+            menuItem: [
+              {
+                title: '考试管理',
+                routeName: 'KaoshiManage',
+                name: '考试管理'
+              }
+            ]
+          }
+        ]
+      };
+    },
+    created() {},
+    mounted() {},
+    methods: {
+      // 调用 注册vuex内注册的editableTabs方法
+      ...mapActions({
+        handleOpen2: 'editableTabs'
+      }),
+      //侧边栏打开
+      collapseStatusOpen () {
+        this.isCollapse = false;
+        this.isCollapseStatusClose = true;
+        this.isCollapseStatusOpen = false;
+      },
+      //侧边栏关闭
+      collapseStatusClose () {
+        this.isCollapse = true;
+        this.isCollapseStatusOpen = true;
+        this.isCollapseStatusClose = false;
+      },
+
+      //登出
+      logout () {
+        var that = this
+        this.$axios.get('/logout')
+          .then(resp => {
+            if (resp.data.code === 200) {
+              // 前后端状态保持一致
+              that.$store.commit('logout')
+              that.$router.replace('/login')
+            }
+          })
+      }
+    }
+  }
+</script>
+<style scoped>
+.logout {
+  margin-bottom: 10px;
+}
+</style>

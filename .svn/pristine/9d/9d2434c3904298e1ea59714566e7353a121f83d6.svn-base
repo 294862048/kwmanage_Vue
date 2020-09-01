@@ -1,0 +1,13 @@
+<template>
+
+</template>
+
+<script>
+  export default {
+    name: 'PersonIP'
+  }
+</script>
+
+<style scoped>
+
+</style>

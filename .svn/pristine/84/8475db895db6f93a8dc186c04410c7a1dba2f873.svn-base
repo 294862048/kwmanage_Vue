@@ -1,0 +1,35 @@
+<template>
+  <div>
+    <div class="admin">
+      <el-container>
+        <el-aside width="auto">
+          <zgz-aside style="width: auto"></zgz-aside> <!-- 我是侧边栏 -->
+        </el-aside>
+        <el-container>
+          <el-main style="padding: 0;">
+            <zgz-tabs style="margin-bottom: 0"></zgz-tabs>
+          </el-main>
+        </el-container>
+      </el-container>
+    </div>
+  </div>
+</template>
+
+<script>
+  import aside from '../tabs/Aside'
+  import tabs from '../tabs/Tabs'
+  export default {
+    name: 'AppIndex',
+    components: {
+      'zgz-aside': aside,
+      'zgz-tabs': tabs
+    },
+    data () {
+      return {
+        value: new Date()
+      };
+    },
+    methods: {
+    }
+  }
+</script>

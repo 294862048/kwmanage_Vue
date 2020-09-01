@@ -1,0 +1,226 @@
+<template>
+  <div>
+    <div style="text-align: left; margin: 5px">
+      <el-button @click="dialogInsertFormVisible = true">新增学期信息</el-button>
+      <el-button @click="cancelSelection()">取消全选</el-button>
+    </div>
+
+<!--    学期信息表格-->
+    <el-table :default-sort = "{prop: 'xueqi_mingcheng'}"
+              ref="xueqiTable"
+              border
+              :data="xueqiData"
+              tooltip-effect="dark"
+              style="width: auto">
+      <!--多选框-->
+      <el-table-column type="selection" width="auto"></el-table-column>
+      <el-table-column sortable align="center" prop="xueqi_mingcheng" label="学期名称" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.xueqi_mingcheng">
+          <span v-if="!showEdit[$index]">{{row.xueqi_mingcheng}}</span>
+        </template>
+      </el-table-column>
+      <!--操作列-->
+      <el-table-column align="center" label="操作" width="240px" fixed="right">
+        <template slot-scope="{row,$index}">
+          <el-button size="mini" @click.native="handleUpdate(row)" v-if="showBtn[$index]">
+            更新
+          </el-button>
+          <el-button size="mini" @click.native="handleCancle($index)" v-if="showBtn[$index]">
+            取消
+          </el-button>
+
+          <el-button size="mini" @click.native="handleEdit($index)" v-if="!showBtn[$index]">
+            编辑
+          </el-button>
+          <!--删除提示-->
+          <el-popover placement="top" >
+            <h5 align="center">确定删除？</h5>
+            <div style="text-align: center; margin: 0">
+              <el-button type="danger" size="mini" @click="deleteRow(row)">确 定</el-button>
+            </div>
+            <el-button size="mini" slot="reference">删 除</el-button>
+          </el-popover>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!--新增学期信息弹窗-->
+    <el-dialog title="新增学期信息" :visible.sync="dialogInsertFormVisible">
+      <el-form ref="insertXueqiFormRef"
+               v-if="true"
+               :rules="insertRules"
+               :model="insertXueqiForm"
+               label-position="left"
+               label-width="0px">
+        <el-form-item style="width: 100%" prop="xueqi_mingcheng">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertXueqiForm.xueqi_mingcheng"
+                    auto-complete="off"
+                    placeholder="请输入学期名称"/>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogInsertFormVisible = false">取 消</el-button>
+        <el-button @click="resetForm">重 置</el-button>
+        <el-button type="primary" @click.native.prevent="insertXueqi">提 交</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+  import {isvalidUser} from '../Login'
+
+  var qs = require('qs');
+
+  export default {
+    name: "XueqiManage",
+
+    data () {
+      //新增输入校验
+      let validInsert = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入学期名称！"));
+        } else {
+          callback();
+        }
+      };
+
+      return {
+        insertXueqiForm: {
+          xueqi_mingcheng: ''
+        },
+
+        //输入规则
+        insertRules: {
+          xueqi_mingcheng: [
+            { required: true, validator: validInsert, trigger: "blur" }
+          ]
+        },
+        dialogInsertFormVisible: false,
+        dialogUpdateFormVisible: false,
+        xueqiData: [],
+        showEdit: [], //显示编辑框
+        showBtn: [],
+        showBtnOrdinary: true
+        //loading: true
+      }
+    },
+
+    mounted () {
+      this.getAllXueqi();
+    },
+
+    methods: {
+      //新增学期
+      insertXueqi() {
+        this.$refs.insertXueqiFormRef.validate((valid) => {
+          if (valid) {
+            var params = qs.stringify({
+              xueqi_mingcheng: this.insertXueqiForm.xueqi_mingcheng
+            })
+            this.$axios.post('/manage/xueqi/insertXueqi', params)
+              .then(res => {
+                if (res.status === 200 && res.data && res.data.code === 200) {
+                  this.$router.go(0);
+                } else if (res.status === 200 && res.data && res.data.code === 201) {
+                  this.$notify({
+                    title: '添加失败！',
+                    type: 'error'
+                  });
+                }
+              });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      },
+
+      //重置表单
+      resetForm() {
+        this.$refs.insertXueqiFormRef.resetFields();
+      },
+
+      //取消全选
+      cancelSelection() {
+        this.$refs.xueqiTable.clearSelection();
+      },
+
+      //获取全部学期列表
+      getAllXueqi() {
+        var getData = this;
+        this.$axios.get('manage/xueqi/getAll')
+          .then((res) => {
+            getData.xueqiData = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取学期信息失败！');
+          })
+      },
+
+      //编辑（行）
+      //点击编辑
+      handleEdit(index) {
+        this.$set(this.showEdit,index,true)
+        this.$set(this.showBtn,index,true)
+      },
+      //取消编辑
+      handleCancle(index) {
+        this.$set(this.showEdit,index,false)
+        this.$set(this.showBtn,index,false)
+      },
+      //点击更新
+      handleUpdate(row) {
+        var params = qs.stringify({
+          xueqi_id: row.xueqi_id,
+          xueqi_mingcheng: row.xueqi_mingcheng
+        })
+        this.$axios.post('/manage/xueqi/updateSingleXueqi', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '恭喜你，这是一条成功消息',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$notify({
+                title: '添加失败！',
+                type: 'error'
+              });
+            }
+          });
+      },
+
+      //删除（行）
+      deleteRow(row) {
+        var params = qs.stringify({
+          xueqi_id: row.xueqi_id
+        })
+        this.$axios.post('/manage/xueqi/deleteSingleXueqi', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '恭喜你，这是一条成功消息',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$notify({
+                title: '添加失败！',
+                type: 'error'
+              });
+            }
+          });
+      }
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>

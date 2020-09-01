@@ -1,0 +1,139 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+// import HelloWorld from '@/components/HelloWorld'
+// 导入刚才编写的组件
+
+import Login from '../components/Login'
+import AppIndex from '../components/home/AppIndex'
+//manage
+import KemuManage from '../components/manage/KemuManage'
+import XuexiaoManage from '../components/manage/XuexiaoManage'
+import JiaoshiManage from '../components/manage/JiaoshiManage'
+import XueqiManage from '../components/manage/XueqiManage'
+import YonghuManage from '../components/manage/YonghuManage'
+import KaoshiManage from '../components/kaowu/KaoshiManage'
+//person
+import PersonInfo from "../components/person/PersonInfo"
+import PersonIP from "../components/person/PersonIP"
+import PersonPassword from '../components/person/PersonPassword'
+//share
+import NetDiskUpload from '../components/share/NetDiskUpload'
+import NetDisk from '../components/share/NetDisk'
+
+import Aside from '../components/tabs/Aside'
+import Tabs from '../components/tabs/Tabs'
+
+// const loginpage = resolve => require(['@/components/Login'],resolve)
+
+Vue.use(Router)
+export default new Router({
+  mode: 'hash',
+  routes: [
+    //重定向让login成为默认首页
+    {
+      path: '/',
+      redirect: '/login'
+    },
+    //下面都是固定的写法
+    {
+      path: '/login',
+      name: 'Login',
+      component: Login
+    },
+    {
+      path: '/register',
+      name: 'Register',
+      component: Login
+    },
+    {
+      path: '/tabs/aside',
+      name: 'Aside',
+      component: Aside
+    },
+    {
+      path: '/tabs/tabs',
+      name: 'Tabs',
+      component: Tabs,
+    },
+    {
+      path: '/index',
+      name: 'AppIndex',
+      component: AppIndex,
+      children: [
+        {
+          path: '/person/personinfo',
+          name: 'PersonInfo',
+          component: PersonInfo
+        },
+        {
+          path: '/person/personip',
+          name: 'PersonIP',
+          component: PersonIP
+        },
+        {
+          path: '/person/personpassword',
+          name: 'PersonPassword',
+          component: PersonPassword
+        },
+        {
+          path: '/manage/kemumanage',
+          name: 'KemuManage',
+          component: KemuManage
+        },
+        {
+          path: '/manage/xuexiaomanage',
+          name: 'XuexiaoManage',
+          component: XuexiaoManage
+        },
+        {
+          path: '/manage/jiaoshimanage',
+          name: 'JiaoshiManage',
+          component: JiaoshiManage
+        },
+        {
+          path: '/manage/xueqimanage',
+          name: 'XueqiManage',
+          component: XueqiManage
+        },
+        {
+          path: '/manage/yonghumanage',
+          name: 'YonghuManage',
+          component: YonghuManage
+        },
+        {
+          path: '/kaowu/kaoshimanage',
+          name: 'KaoshiManage',
+          component: KaoshiManage
+        },
+        {
+          path: '/share/netdisk',
+          name: 'NetDisk',
+          component: NetDisk
+        },
+        {
+          path: '/share/netdiskupload',
+          name: 'NetDiskUpload',
+          component: NetDiskUpload
+        }
+      ]
+    },
+  ]
+})
+/*
+//对每次访问之前都要先看是否已经登录
+router.beforeEach((to,from,next)=>{
+  if(to.path.startsWith('/login')){
+    window.sessionStorage.removeItem('access-token');
+    next();
+  }else{
+    let token = window.sessionStorage.getItem('access-token');
+    if(!token){
+      //未登录  跳回主页面
+      next({path:'/login'});
+    }else{
+      next();
+    }
+  }
+});
+export const requestLogin = params => {return axios.post('/login',qs.stringify(params)).then(res => res.data)}
+export default router*/

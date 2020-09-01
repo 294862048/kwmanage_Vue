@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SvnBranchConfigurationManager">
+    <option name="myConfigurationMap">
+      <map>
+        <entry key="$PROJECT_DIR$">
+          <value>
+            <SvnBranchConfiguration>
+              <option name="branchUrls">
+                <list>
+                  <option value="svn://subversion.e.coding.net/a294862/kwmanage/branches/Vue/kwmanage/branches" />
+                  <option value="svn://subversion.e.coding.net/a294862/kwmanage/branches/Vue/kwmanage/tags" />
+                </list>
+              </option>
+              <option name="trunkUrl" value="svn://subversion.e.coding.net/a294862/kwmanage/branches/Vue/kwmanage/trunk" />
+            </SvnBranchConfiguration>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

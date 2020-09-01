@@ -1,0 +1,226 @@
+<template>
+  <div>
+    <div style="text-align: left; margin: 5px">
+      <el-button @click="dialogInsertFormVisible = true">新增科目信息</el-button>
+      <el-button @click="cancelSelection()">取消全选</el-button>
+    </div>
+
+    <!--科目信息表格-->
+    <el-table :default-sort = "{prop: 'kemu_mingcheng', order: 'descending'}"
+              :height="tableHeight"
+              ref="kemuTable"
+              border
+              :data="kemuData"
+              tooltip-effect="dark"
+              style="width: auto">
+      <!--多选框-->
+      <el-table-column type="selection" width="auto"></el-table-column>
+      <el-table-column sortable align="center" prop="kemu_mingcheng" label="科目名称" width="auto">
+        <template slot-scope="{row,$index}">
+          <input class="edit-cell" v-if="showEdit[$index]" v-model="row.kemu_mingcheng">
+          <span v-if="!showEdit[$index]">{{row.kemu_mingcheng}}</span>
+        </template>
+      </el-table-column>
+      <!--操作列-->
+      <el-table-column align="center" label="操作" width="240px" fixed="right">
+        <template slot-scope="{row,$index}">
+          <el-button size="mini" @click.native="handleUpdate(row)" v-if="showBtn[$index]">
+            更新
+          </el-button>
+          <el-button size="mini" @click.native="handleCancle($index)" v-if="showBtn[$index]">
+            取消
+          </el-button>
+
+          <el-button size="mini" @click.native="handleEdit($index)" v-if="!showBtn[$index]">
+            编辑
+          </el-button>
+          <!--删除提示-->
+          <el-popover placement="top" >
+            <h5 align="center">确定删除？</h5>
+            <div style="text-align: center; margin: 0">
+              <el-button type="danger" size="mini" @click="deleteRow(row)">确 定</el-button>
+            </div>
+            <el-button size="mini" slot="reference">删 除</el-button>
+          </el-popover>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!--    新增学期信息弹窗-->
+    <el-dialog title="新增科目信息" :visible.sync="dialogInsertFormVisible">
+      <el-form ref="insertKemuFormRef"
+               v-if="true"
+               :rules="insertRules"
+               :model="insertKemuForm"
+               label-position="left"
+               label-width="0px">
+        <el-form-item style="width: 100%" prop="kemu_mingcheng">
+          <el-input :clearable="true"
+                    type="text"
+                    v-model="insertKemuForm.kemu_mingcheng"
+                    auto-complete="off"
+                    placeholder="请输入科目名称"/>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogInsertFormVisible = false">取 消</el-button>
+        <el-button @click="resetForm">重 置</el-button>
+        <el-button type="primary" @click.native.prevent="insertKemu">提 交</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+  var qs = require('qs');
+  export default {
+    name: "KemuManage",
+
+    data () {
+      //输入校验
+      let validInsert = (rule, value, callback) => {
+        if (!value) {
+          callback(new Error("请输入科目名称！"));
+        } else {
+          callback();
+        }
+      };
+
+      return {
+        tableHeight: window.innerHeight * 0.85,
+        insertKemuForm: {
+          kemu_mingcheng: ''
+        },
+
+        //输入规则
+        insertRules: {
+          kemu_mingcheng: [
+            { required: true, validator: validInsert, trigger: "blur" }
+          ]
+        },
+        dialogInsertFormVisible: false,
+        dialogUpdateFormVisible: false,
+        kemuData: [],
+        showEdit: [], //显示编辑框
+        showBtn: [],
+        showBtnOrdinary: true
+        //loading: true
+      }
+    },
+
+    mounted () {
+      this.getAllKemu();
+    },
+
+    methods: {
+      //新增科目
+      insertKemu() {
+        this.$refs.insertKemuFormRef.validate((valid) => {
+          if (valid) {
+            var params = qs.stringify({
+              kemu_mingcheng: this.insertKemuForm.kemu_mingcheng
+            })
+            this.$axios.post('/manage/kemu/insertKemu', params)
+              .then(res => {
+                if (res.status === 200 && res.data && res.data.code === 200) {
+                  this.$router.go(0);
+                } else if (res.status === 200 && res.data && res.data.code === 201) {
+                  this.$notify({
+                    title: '添加失败！',
+                    type: 'error'
+                  });
+                }
+              });
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      },
+
+      //重置表单
+      resetForm() {
+        this.$refs.insertKemuFormRef.resetFields();
+      },
+
+      //取消全选
+      cancelSelection() {
+        this.$refs.kemuTable.clearSelection();
+      },
+
+      //获取全部科目列表
+      getAllKemu() {
+        var getData = this;
+        this.$axios.get('manage/kemu/getAll')
+          .then((res) => {
+            getData.kemuData = res.data.result;
+          })
+          .catch((err) =>{
+            console.log(err);
+            alert('获取科目信息失败！');
+          })
+      },
+
+
+      //编辑科目（行）
+//点击编辑
+      handleEdit(index) {
+        this.$set(this.showEdit,index,true)
+        this.$set(this.showBtn,index,true)
+      },
+      //取消编辑
+      handleCancle(index) {
+        this.$set(this.showEdit,index,false)
+        this.$set(this.showBtn,index,false)
+      },
+      //点击更新
+      handleUpdate(row) {
+        var params = qs.stringify({
+          kemu_id: row.kemu_id,
+          kemu_mingcheng: row.kemu_mingcheng
+        })
+        this.$axios.post('/manage/kemu/updateSingleKemu', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '恭喜你，这是一条成功消息',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$notify({
+                title: '添加失败！',
+                type: 'error'
+              });
+            }
+          });
+      },
+
+      //删除（行）
+      deleteRow(row) {
+        var params = qs.stringify({
+          kemu_id: row.kemu_id
+        })
+        this.$axios.post('/manage/kemu/deleteSingleKemu', params)
+          .then(res => {
+            if (res.status === 200 && res.data && res.data.code === 200) {
+              this.$message({
+                message: '恭喜你，这是一条成功消息',
+                type: 'success',
+              });
+              this.$router.go(0);
+            } else if (res.status === 200 && res.data && res.data.code === 201) {
+              this.$notify({
+                title: '添加失败！',
+                type: 'error'
+              });
+            }
+          });
+      }
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>
